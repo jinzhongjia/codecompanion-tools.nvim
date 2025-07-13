@@ -1,6 +1,5 @@
 local M = {}
 
-
 ---@alias ModelName string
 
 ---@class ModelToggleOpts
@@ -25,22 +24,23 @@ local original_adapters = {}
 ---@type table<integer, integer>
 local sequence_indices = {}
 
- ---@return CodeCompanion.Chat|nil
+---@return CodeCompanion.Chat|nil
 local function get_chat_for_buffer(bufnr)
-  -- Directly require the chat strategy module
-  local chat_strategy = require("codecompanion.strategies.chat")
-  if type(chat_strategy.buf_get_chat) ~= "function" then
-    return nil
-  end
-  return chat_strategy.buf_get_chat(bufnr)
+	-- Directly require the chat strategy module
+	local chat_strategy = require("codecompanion.strategies.chat")
+	if type(chat_strategy.buf_get_chat) ~= "function" then
+		return nil
+	end
+	return chat_strategy.buf_get_chat(bufnr)
 end
 local function load_config()
-  local cfg = require("codecompanion.config")
-  return (cfg.extensions
-        and cfg.extensions["codecompanion-tools"]
-        and cfg.extensions["codecompanion-tools"].opts
-        and cfg.extensions["codecompanion-tools"].opts.model_toggle)
-      or {}
+	local cfg = require("codecompanion.config")
+	return (
+		cfg.extensions
+		and cfg.extensions["codecompanion-tools"]
+		and cfg.extensions["codecompanion-tools"].opts
+		and cfg.extensions["codecompanion-tools"].opts.model_toggle
+	) or {}
 end
 
 -- Forward declarations
@@ -56,7 +56,7 @@ toggle_sequence_mode = function(bufnr, chat, cfg)
 	local current_adapter = chat.adapter.name
 	local current_model = (type(chat.adapter.model) == "table" and chat.adapter.model.name) or chat.settings.model
 	local original = original_adapters[bufnr]
-	
+
 	-- Filter sequence to only include items for current adapter
 	local adapter_sequence = {}
 	for _, item in ipairs(sequence) do
@@ -64,17 +64,20 @@ toggle_sequence_mode = function(bufnr, chat, cfg)
 			table.insert(adapter_sequence, item.model)
 		end
 	end
-	
+
 	if #adapter_sequence == 0 then
-		vim.notify(string.format("No models configured for current adapter '%s' in sequence", current_adapter), vim.log.levels.WARN)
+		vim.notify(
+			string.format("No models configured for current adapter '%s' in sequence", current_adapter),
+			vim.log.levels.WARN
+		)
 		return
 	end
-	
+
 	-- Initialize sequence index for this buffer
 	if not sequence_indices[bufnr] then
-		sequence_indices[bufnr] = 0  -- 0 means original
+		sequence_indices[bufnr] = 0 -- 0 means original
 	end
-	
+
 	-- Find current position in adapter sequence
 	local current_index = nil
 	for i, model in ipairs(adapter_sequence) do
@@ -83,9 +86,9 @@ toggle_sequence_mode = function(bufnr, chat, cfg)
 			break
 		end
 	end
-	
+
 	local target_model
-	
+
 	if current_index then
 		-- Current position is in sequence, move to next
 		if current_index < #adapter_sequence then
@@ -105,11 +108,11 @@ toggle_sequence_mode = function(bufnr, chat, cfg)
 		sequence_indices[bufnr] = 1
 		target_model = adapter_sequence[1]
 	end
-	
+
 	-- Apply the target model
 	chat:apply_model(target_model)
 	chat:apply_settings()
-	
+
 	vim.notify(string.format("Switched to %s:%s", current_adapter, target_model), vim.log.levels.INFO)
 end
 
@@ -147,7 +150,7 @@ toggle_models_mode = function(bufnr, chat, cfg)
 
 	local current = (type(chat.adapter.model) == "table" and chat.adapter.model.name) or chat.settings.model
 	local original = original_adapters[bufnr].model
-	
+
 	-- Determine target model based on current state
 	local target
 	if current == original then
@@ -163,7 +166,7 @@ toggle_models_mode = function(bufnr, chat, cfg)
 				break
 			end
 		end
-		
+
 		if current_index then
 			-- Cycle to next model, or back to original if at end
 			if current_index < #model_list then
@@ -197,16 +200,16 @@ local function toggle_model(bufnr)
 	end
 
 	local cfg = load_config()
-	
+
 	-- Store original adapter and model the first time
 	if original_adapters[bufnr] == nil then
 		local current_model = (type(chat.adapter.model) == "table" and chat.adapter.model.name) or chat.settings.model
 		original_adapters[bufnr] = {
 			adapter = chat.adapter.name,
-			model = current_model
+			model = current_model,
 		}
 	end
-	
+
 	-- Check if sequence mode is configured
 	if cfg.sequence and type(cfg.sequence) == "table" and #cfg.sequence > 0 then
 		toggle_sequence_mode(bufnr, chat, cfg)
@@ -273,4 +276,3 @@ M.exports = {
 }
 
 return M
-
