@@ -1,0 +1,321 @@
+*codecompanion-tools.txt*  For Neovim >= 0.8.0       Last change: 2024
+
+CODECOMPANION-TOOLS                                     *codecompanion-tools*
+
+A collection of useful tools and extensions for CodeCompanion.nvim
+
+Author: Your Name <your.email@example.com>
+License: MIT License
+
+==============================================================================
+CONTENTS                                        *codecompanion-tools-contents*
+
+1. Introduction ........................ |codecompanion-tools-introduction|
+2. Installation ........................ |codecompanion-tools-installation|
+3. Configuration ....................... |codecompanion-tools-configuration|
+4. Rule Manager ........................ |codecompanion-tools-rule-manager|
+5. Model Toggle ........................ |codecompanion-tools-model-toggle|
+6. Commands ............................ |codecompanion-tools-commands|
+7. API ................................. |codecompanion-tools-api|
+8. Troubleshooting ..................... |codecompanion-tools-troubleshooting|
+9. Changelog ........................... |codecompanion-tools-changelog|
+
+==============================================================================
+INTRODUCTION                                *codecompanion-tools-introduction*
+
+codecompanion-tools.nvim is a collection of useful tools and extensions for
+CodeCompanion.nvim, providing enhanced functionality for AI-assisted coding.
+
+Features:
+- Automatic rule file detection and management
+- Quick model switching in chat buffers
+- Intelligent context management
+- Support for multiple AI tools and rule formats
+
+==============================================================================
+INSTALLATION                                *codecompanion-tools-installation*
+
+This plugin requires CodeCompanion.nvim to be installed and configured first.
+
+Using lazy.nvim: >
+    {
+      "olimorris/codecompanion.nvim",
+      dependencies = {
+        "your-username/codecompanion-tools.nvim"
+      },
+      config = function()
+        require("codecompanion").setup({
+          extensions = {
+            ["codecompanion-tools"] = {
+              opts = {
+                -- Configuration options go here
+              },
+            },
+          },
+        })
+      end,
+    }
+<
+
+Using packer.nvim: >
+    use {
+      "olimorris/codecompanion.nvim",
+      requires = {
+        "your-username/codecompanion-tools.nvim"
+      },
+      config = function()
+        -- Same configuration as above
+      end
+    }
+<
+
+==============================================================================
+CONFIGURATION                              *codecompanion-tools-configuration*
+
+The plugin is configured through CodeCompanion's extension system.
+
+Default configuration: >
+    {
+      extensions = {
+        ["codecompanion-tools"] = {
+          opts = {
+            rules = {
+              enabled = true,
+              debug = false,
+              rules_filenames = {
+                ".rules",
+                ".goosehints",
+                ".cursorrules",
+                ".windsurfrules",
+                ".clinerules",
+                ".github/copilot-instructions.md",
+                "AGENT.md",
+                "AGENTS.md",
+                "CLAUDE.md",
+                ".codecompanionrules",
+              },
+              extract_file_paths_from_chat_message = nil,
+            },
+            model_toggle = {
+              enabled = true,
+              keymap = "<S-Tab>",
+              sequence = {},
+              models = {},
+            },
+          },
+        },
+      },
+    }
+<
+
+==============================================================================
+RULE MANAGER                                *codecompanion-tools-rule-manager*
+
+The rule manager automatically detects and manages rule files for your
+project context in CodeCompanion chat buffers.
+
+------------------------------------------------------------------------------
+RULE MANAGER OPTIONS                    *codecompanion-tools-rule-manager-opts*
+
+rules.enabled                                   *codecompanion-tools-rules-enabled*
+    Type: boolean
+    Default: true
+    
+    Enable or disable the rule manager functionality.
+
+rules.debug                                       *codecompanion-tools-rules-debug*
+    Type: boolean
+    Default: false
+    
+    Enable debug logging for rule processing.
+
+rules.rules_filenames                     *codecompanion-tools-rules-filenames*
+    Type: table
+    Default: See configuration section
+    
+    List of rule filenames to search for. The manager will look for these
+    files in parent directories of referenced files.
+
+rules.extract_file_paths_from_chat_message    *codecompanion-tools-rules-extract*
+    Type: function or nil
+    Default: nil
+    
+    Custom function to extract file paths from chat messages. Should return
+    a table of file paths.
+    
+    Example: >
+        extract_file_paths_from_chat_message = function(message)
+          local paths = {}
+          for path in message.content:gmatch("Created: `([^`]+)`") do
+            table.insert(paths, path)
+          end
+          return paths
+        end
+<
+
+------------------------------------------------------------------------------
+RULE MANAGER BEHAVIOR                  *codecompanion-tools-rule-manager-behavior*
+
+The rule manager operates automatically based on these triggers:
+
+1. Chat buffer creation
+2. Mode change from insert to normal
+3. After message submission
+4. After tool execution
+5. Manual trigger via |:CodeCompanionRulesProcess|
+
+Path Collection:
+- Chat references (from /file, /buffer commands)
+- Tool output patterns in messages
+- Custom extraction function results
+
+Rule File Search:
+- Searches parent directories upward from each referenced file
+- Looks for rule files in order of preference
+- Prioritizes deeper directories (more specific rules)
+
+Reference Management:
+- Adds rule files as pinned references
+- Removes obsolete references automatically
+- Updates context as needed
+
+==============================================================================
+MODEL TOGGLE                                *codecompanion-tools-model-toggle*
+
+Quick model switching functionality for CodeCompanion chat buffers.
+
+------------------------------------------------------------------------------
+MODEL TOGGLE OPTIONS                    *codecompanion-tools-model-toggle-opts*
+
+model_toggle.enabled                       *codecompanion-tools-model-toggle-enabled*
+    Type: boolean
+    Default: true
+    
+    Enable or disable the model toggle functionality.
+
+model_toggle.keymap                         *codecompanion-tools-model-toggle-keymap*
+    Type: string
+    Default: "<S-Tab>"
+    
+    Keymap to trigger model switching in chat buffers.
+
+model_toggle.sequence                     *codecompanion-tools-model-toggle-sequence*
+    Type: table
+    Default: {}
+    
+    Sequence mode configuration. Each entry should have 'adapter' and 'model'
+    keys. Only models matching the current adapter will be cycled through.
+    
+    Example: >
+        sequence = {
+          { adapter = "copilot", model = "gpt-4" },
+          { adapter = "copilot", model = "o1-mini" },
+          { adapter = "anthropic", model = "claude-3-5-sonnet-20241022" },
+          { adapter = "openai", model = "gpt-4o" },
+        }
+<
+
+model_toggle.models                         *codecompanion-tools-model-toggle-models*
+    Type: table
+    Default: {}
+    
+    Models mode configuration. Keys are adapter names, values are either a
+    single model name (string) or a list of model names (table).
+    This is ignored if 'sequence' is set.
+    
+    Example: >
+        models = {
+          copilot = { "gpt-4", "o1-mini" },
+          anthropic = { "claude-3-5-sonnet-20241022", "claude-3-opus-20240229" },
+          openai = { "gpt-4o", "gpt-4o-mini" },
+        }
+<
+
+------------------------------------------------------------------------------
+MODEL TOGGLE MODES                      *codecompanion-tools-model-toggle-modes*
+
+Sequence Mode:
+- Cycles through a predefined sequence of adapter+model combinations
+- Only shows models for your current adapter
+- Use CodeCompanion's 'ga' keymap to change adapters first
+
+Models Mode:
+- Cycles through models within the same adapter
+- Supports single model (string) or multiple models (table) per adapter
+
+==============================================================================
+COMMANDS                                        *codecompanion-tools-commands*
+
+:CodeCompanionRulesProcess                       *:CodeCompanionRulesProcess*
+    Manually re-evaluate rule references in the current buffer.
+
+:CodeCompanionRulesDebug                           *:CodeCompanionRulesDebug*
+    Toggle debug logging for the rule manager.
+
+:CodeCompanionRulesEnable                         *:CodeCompanionRulesEnable*
+    Enable the rule manager functionality.
+
+:CodeCompanionRulesDisable                       *:CodeCompanionRulesDisable*
+    Disable the rule manager functionality.
+
+==============================================================================
+API                                                  *codecompanion-tools-api*
+
+The plugin provides the following API functions:
+
+codecompanion-tools.toggle_model({bufnr})        *codecompanion-tools.toggle_model*
+    Toggle the model in the specified buffer.
+    
+    Parameters:
+        {bufnr} (number) Buffer number of the CodeCompanion chat buffer
+    
+    Example: >
+        -- Toggle model in current buffer
+        require("codecompanion").extensions["codecompanion-tools"].toggle_model(
+          vim.api.nvim_get_current_buf()
+        )
+<
+
+------------------------------------------------------------------------------
+BACKWARD COMPATIBILITY                  *codecompanion-tools-backward-compatibility*
+
+The original setup method is still supported: >
+    require("codecompanion_tools").setup({
+      -- Configuration options
+    })
+<
+
+This will automatically delegate to the proper extension.
+
+==============================================================================
+TROUBLESHOOTING                            *codecompanion-tools-troubleshooting*
+
+Extension Not Loading~
+    If you see the error:
+    "Error loading extension codecompanion-tools: module 'codecompanion._extensions.codecompanion-tools' not found"
+    
+    Ensure your directory structure matches:
+    lua/codecompanion/_extensions/codecompanion-tools/init.lua
+
+Rule Files Not Being Added~
+    1. Enable debug mode: rules = { debug = true }
+    2. Check the output for path collection and rule discovery
+    3. Verify rule files exist in parent directories of referenced files
+    4. Ensure files are within your project root (getcwd())
+
+Model Toggle Not Working~
+    1. Verify you're in a CodeCompanion chat buffer (filetype = "codecompanion")
+    2. Check that models are configured for your current adapter
+    3. Ensure the keymap isn't conflicting with other bindings
+
+==============================================================================
+CHANGELOG                                      *codecompanion-tools-changelog*
+
+v1.0.0
+    - Initial release
+    - Rule manager functionality
+    - Model toggle functionality
+    - CodeCompanion extension integration
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl: 
