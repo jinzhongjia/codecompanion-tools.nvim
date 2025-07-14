@@ -9,19 +9,17 @@ function M.get_extension_config(extension_name, sub_config)
 	if not ok then
 		return {}
 	end
-	
-	local ext_config = cfg.extensions 
-		and cfg.extensions[extension_name] 
-		and cfg.extensions[extension_name].opts
-	
+
+	local ext_config = cfg.extensions and cfg.extensions[extension_name] and cfg.extensions[extension_name].opts
+
 	if not ext_config then
 		return {}
 	end
-	
+
 	if sub_config then
 		return ext_config[sub_config] or {}
 	end
-	
+
 	return ext_config
 end
 
@@ -47,7 +45,7 @@ function M.setup_commands(prefix, commands)
 	for name, cmd in pairs(commands) do
 		local command_name = prefix .. name
 		vim.api.nvim_create_user_command(command_name, cmd.callback, {
-			desc = cmd.desc
+			desc = cmd.desc,
 		})
 	end
 end
@@ -79,10 +77,8 @@ function M.setup_strategy_keymap(key, callback, desc, keymap_name)
 	if not ok then
 		return
 	end
-	
-	if cfg.strategies 
-		and cfg.strategies.chat 
-		and type(cfg.strategies.chat.keymaps) == "table" then
+
+	if cfg.strategies and cfg.strategies.chat and type(cfg.strategies.chat.keymaps) == "table" then
 		cfg.strategies.chat.keymaps[keymap_name] = {
 			modes = { n = key },
 			description = desc,

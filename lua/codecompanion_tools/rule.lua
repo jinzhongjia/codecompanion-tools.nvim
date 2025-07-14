@@ -10,7 +10,7 @@ local M = {}
 ---@field enabled boolean
 ---@field extract_file_paths_from_chat_message? fun(message:table):string[]|nil
 
- local DEFAULT_CONFIG = {
+local DEFAULT_CONFIG = {
 	rules_filenames = {
 		".rules",
 		".goosehints",
@@ -58,7 +58,7 @@ local function collect_paths(bufnr)
 		return {}
 	end
 
-	local proj = normalize(vim.fn.getcwd())
+	local proj = utils.normalize_path(vim.fn.getcwd())
 	local out, seen = {}, {}
 
 	local function is_rule_file(p)
@@ -128,7 +128,7 @@ local function collect_rules(paths)
 	if not M.config.enabled then
 		return {}
 	end
-           	local proj = utils.normalize_path(vim.fn.getcwd())
+	local proj = utils.normalize_path(vim.fn.getcwd())
 	local out, seen = {}, {}
 
 	local function ascend(dir)
@@ -458,14 +458,14 @@ function M.setup(opts)
 			callback = function()
 				on_mode(vim.api.nvim_get_current_buf())
 			end,
-			desc = "Re-evaluate rule references now"
+			desc = "Re-evaluate rule references now",
 		},
 		Debug = {
 			callback = function()
 				M.config.debug = not M.config.debug
 				utils.log("CodeCompanion-Rules debug = " .. tostring(M.config.debug), true)
 			end,
-			desc = "Toggle rules debug"
+			desc = "Toggle rules debug",
 		},
 		Enable = {
 			callback = function()
@@ -473,7 +473,7 @@ function M.setup(opts)
 				utils.notify("Extension enabled", nil, "CodeCompanionRules")
 				on_mode(vim.api.nvim_get_current_buf())
 			end,
-			desc = "Enable CodeCompanion-Rules extension"
+			desc = "Enable CodeCompanion-Rules extension",
 		},
 		Disable = {
 			callback = function()
@@ -486,8 +486,8 @@ function M.setup(opts)
 				end
 				utils.notify("Extension disabled", nil, "CodeCompanionRules")
 			end,
-			desc = "Disable CodeCompanion-Rules extension"
-		}
+			desc = "Disable CodeCompanion-Rules extension",
+		},
 	})
 end
 

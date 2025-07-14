@@ -10,7 +10,7 @@ function M.get_chat(bufnr)
 	if not ok or not chat_strategy.buf_get_chat then
 		return nil
 	end
-	
+
 	local chat_ok, chat = pcall(chat_strategy.buf_get_chat, bufnr)
 	return chat_ok and chat or nil
 end
@@ -65,10 +65,10 @@ function M.create_file_ref(chat, path, opts)
 	local rel_path = vim.fn.fnamemodify(path, ":.")
 	local bufnr = vim.fn.bufnr(rel_path)
 	local is_loaded = bufnr ~= -1 and vim.api.nvim_buf_is_loaded(bufnr)
-	
+
 	local buffer_cmd_ok, buffer_cmd = pcall(require, "codecompanion.strategies.chat.slash_commands.buffer")
 	local file_cmd_ok, file_cmd = pcall(require, "codecompanion.strategies.chat.slash_commands.file")
-	
+
 	if is_loaded and buffer_cmd_ok then
 		buffer_cmd.new({ Chat = chat }):output({ bufnr = bufnr, path = rel_path }, opts)
 		return true
@@ -76,7 +76,7 @@ function M.create_file_ref(chat, path, opts)
 		file_cmd.new({ Chat = chat }):output({ path = rel_path }, opts)
 		return true
 	end
-	
+
 	return false
 end
 
@@ -87,11 +87,11 @@ function M.rerender_context(chat)
 		if not chat.bufnr or not vim.api.nvim_buf_is_valid(chat.bufnr) then
 			return
 		end
-		
+
 		local start = chat.header_line + 1
 		local last = vim.api.nvim_buf_line_count(chat.bufnr)
 		local i = start
-		
+
 		-- Find end of context area
 		while i < last do
 			local line = vim.api.nvim_buf_get_lines(chat.bufnr, i, i + 1, false)[1] or ""
@@ -101,19 +101,19 @@ function M.rerender_context(chat)
 				break
 			end
 		end
-		
+
 		-- Clear old context
 		if i > start then
 			chat.ui:unlock_buf()
 			vim.api.nvim_buf_set_lines(chat.bufnr, start, i, false, {})
 		end
-		
+
 		-- Re-render references
 		if chat.references and chat.references.render then
 			chat.ui:unlock_buf()
 			chat.references:render()
 		end
-		
+
 		chat.ui:unlock_buf()
 	end)
 end

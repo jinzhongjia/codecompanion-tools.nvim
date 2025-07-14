@@ -86,7 +86,7 @@ end
 function M.notify(msg, level, title)
 	vim.schedule(function()
 		vim.notify(msg, level or vim.log.levels.INFO, {
-			title = title or "CodeCompanion-Tools"
+			title = title or "CodeCompanion-Tools",
 		})
 	end)
 end

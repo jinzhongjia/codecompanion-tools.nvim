@@ -197,14 +197,14 @@ end
 ---@param opts ModelToggleOpts
 local function setup_keymaps(opts)
 	local key = opts.keymap or "<S-Tab>"
-	
+
 	local function toggle_current_buffer()
 		toggle_model(vim.api.nvim_get_current_buf())
 	end
-	
+
 	-- Setup strategy keymap
 	config_utils.setup_strategy_keymap(key, toggle_current_buffer, "Toggle chat model", "toggle_model")
-	
+
 	-- Setup buffer-local keymap
 	config_utils.setup_buffer_keymap(key, function()
 		toggle_model(vim.api.nvim_get_current_buf())
