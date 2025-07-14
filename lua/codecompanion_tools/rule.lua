@@ -1,5 +1,6 @@
 local utils = require("codecompanion_tools.utils")
 local chat_utils = require("codecompanion_tools.chat")
+local config_utils = require("codecompanion_tools.config")
 
 local M = {}
 
@@ -42,7 +43,7 @@ local function collect_paths(bufnr)
 	-- Check codecompanion buffer
 	local filetype = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
 	if filetype ~= "codecompanion" then
-		log("collect_paths → not a codecompanion buffer, skipping")
+		utils.log("collect_paths → not a codecompanion buffer, skipping", M.config.debug)
 		return {}
 	end
 
@@ -53,7 +54,7 @@ local function collect_paths(bufnr)
 
 	local chat_ok, chat = pcall(chat_strategy.buf_get_chat, bufnr)
 	if not chat_ok or not chat then
-		log("collect_paths → failed to get chat object")
+		utils.log("collect_paths → failed to get chat object", M.config.debug)
 		return {}
 	end
 
@@ -66,7 +67,7 @@ local function collect_paths(bufnr)
 	end
 
 	local function add(p)
-		p = normalize(clean(p))
+		p = utils.normalize_path(utils.clean_path(p))
 		if is_rule_file(p) then
 			return
 		end
@@ -78,8 +79,8 @@ local function collect_paths(bufnr)
 
 	-- Extract from refs
 	for _, r in ipairs(chat.refs or {}) do
-		if is_file_ref(r) then
-			add(r.path ~= "" and r.path or id_to_path(r.id))
+		if chat_utils.is_file_ref(r) then
+			add(r.path ~= "" and r.path or chat_utils.id_to_path(r.id))
 		end
 	end
 
@@ -118,7 +119,7 @@ local function collect_paths(bufnr)
 		end
 	end
 
-	log(("collect_paths → %d path(s)"):format(#out))
+	utils.log(("collect_paths → %d path(s)"):format(#out), M.config.debug)
 	return out
 end
 
@@ -127,15 +128,15 @@ local function collect_rules(paths)
 	if not M.config.enabled then
 		return {}
 	end
-	local proj = normalize(vim.fn.getcwd())
+           	local proj = utils.normalize_path(vim.fn.getcwd())
 	local out, seen = {}, {}
 
 	local function ascend(dir)
-		dir = normalize(dir)
+		dir = utils.normalize_path(dir)
 		-- Cross-platform root check
 		local is_root = (dir == "/" or dir:match("^%a:[/\\]?$")) -- Unix root or Windows drive root
 		while not is_root and dir:match("^" .. vim.pesc(proj)) do
-			local f = find_first_file(dir, M.config.rules_filenames)
+			local f = utils.find_first_file(dir, M.config.rules_filenames)
 			if f and not seen[f] then
 				out[#out + 1] = f
 				seen[f] = true
@@ -159,7 +160,7 @@ local function collect_rules(paths)
 		return select(2, a:gsub(sep, "")) > select(2, b:gsub(sep, ""))
 	end)
 
-	log(("collect_rules → %d rule file(s)"):format(#out))
+	utils.log(("collect_rules → %d rule file(s)"):format(#out), M.config.debug)
 	return out
 end
 
@@ -208,7 +209,7 @@ local function sync_refs(bufnr, rule_files)
 
 	local chat_ok, chat = pcall(chat_strategy.buf_get_chat, bufnr)
 	if not chat_ok or not chat then
-		log("sync_refs → failed to get chat object")
+		utils.log("sync_refs → failed to get chat object", M.config.debug)
 		return
 	end
 
@@ -226,8 +227,8 @@ local function sync_refs(bufnr, rule_files)
 	local existing = {}
 	for i = #chat.refs, 1, -1 do
 		local r = chat.refs[i]
-		if is_file_ref(r) then
-			local path = id_to_path(r.id)
+		if chat_utils.is_file_ref(r) then
+			local path = chat_utils.id_to_path(r.id)
 			if existing[path] then
 				table.remove(chat.refs, i)
 			else
@@ -260,7 +261,7 @@ local function sync_refs(bufnr, rule_files)
 	for i = #chat.refs, 1, -1 do
 		local r = chat.refs[i]
 		if r.opts and r.opts.rules_managed then
-			local p = id_to_path(r.id)
+			local p = chat_utils.id_to_path(r.id)
 			if not desired[p] then
 				local ref_id = r.id
 				table.remove(chat.refs, i)
@@ -277,7 +278,7 @@ local function sync_refs(bufnr, rule_files)
 
 	-- Notify and re-render if changed
 	if added_cnt + removed_cnt > 0 then
-		log(string.format("sync_refs → +%d -%d", added_cnt, removed_cnt))
+		utils.log(string.format("sync_refs → +%d -%d", added_cnt, removed_cnt), M.config.debug)
 		-- Build notification message
 		local msg_parts = {}
 		if added_cnt > 0 then
@@ -287,11 +288,11 @@ local function sync_refs(bufnr, rule_files)
 			table.insert(msg_parts, ("Removed %d obsolete reference(s)"):format(removed_cnt))
 		end
 		if #msg_parts > 0 then
-			notify(table.concat(msg_parts, ", "))
+			utils.notify(table.concat(msg_parts, ", "))
 		end
-		rerender_context(chat)
+		chat_utils.rerender_context(chat)
 	else
-		log("sync_refs → no change")
+		utils.log("sync_refs → no change", M.config.debug)
 	end
 end
 
@@ -300,22 +301,23 @@ local function process(bufnr)
 	if not M.config.enabled then
 		return
 	end
-	log("process → begin")
+	utils.log("process → begin", M.config.debug)
 	local paths = collect_paths(bufnr)
-	local fp = hash(paths)
+	local fp = utils.create_hash(paths)
 
 	if fingerprint[bufnr] == fp then
-		log("process → fingerprint unchanged, skipping")
+		utils.log("process → fingerprint unchanged, skipping", M.config.debug)
 		return
 	end
 	fingerprint[bufnr] = fp
 
 	sync_refs(bufnr, collect_rules(paths))
-	log("process → done")
+	utils.log("process → done", M.config.debug)
 end
 
 -- Event handlers
 local function on_mode(bufnr)
+	utils.log("on_mode → begin", M.config.debug)
 	if not M.config.enabled then
 		return
 	end
@@ -331,6 +333,7 @@ local function on_mode(bufnr)
 end
 
 local function on_submit(bufnr)
+	utils.log("on_submit → begin", M.config.debug)
 	if not M.config.enabled then
 		return
 	end
@@ -345,6 +348,7 @@ local function on_submit(bufnr)
 end
 
 local function on_tool(bufnr)
+	utils.log("on_tool → begin", M.config.debug)
 	if not M.config.enabled then
 		return
 	end
