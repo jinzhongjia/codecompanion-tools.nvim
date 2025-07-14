@@ -1,3 +1,6 @@
+local utils = require("codecompanion_tools.utils")
+local chat_utils = require("codecompanion_tools.chat")
+
 local M = {}
 
 ---@class CodeCompanionRulesConfig
@@ -6,8 +9,7 @@ local M = {}
 ---@field enabled boolean
 ---@field extract_file_paths_from_chat_message? fun(message:table):string[]|nil
 
--- Default configuration
-M.config = {
+ local DEFAULT_CONFIG = {
 	rules_filenames = {
 		".rules",
 		".goosehints",
@@ -25,62 +27,11 @@ M.config = {
 	extract_file_paths_from_chat_message = nil,
 }
 
+M.config = DEFAULT_CONFIG
+
 -- Per-buffer caches
 local enabled = {}
 local fingerprint = {}
-
--- Utility functions
-local function log(msg)
-	if M.config.debug then
-		print("[Rules] " .. msg)
-	end
-end
-
-local function notify(msg, level)
-	vim.schedule(function()
-		vim.notify("[CodeCompanionRules] " .. msg, level or vim.log.levels.INFO, { title = "CodeCompanionRules" })
-	end)
-end
-
-local function normalize(p)
-	-- Cross-platform path normalization
-	local path = vim.fn.fnamemodify(p, ":p")
-	-- Remove trailing slash/backslash
-	return path:gsub("[/\\]$", "")
-end
-
-local function clean(p)
-	return p:gsub("^[`\"'%s]+", ""):gsub("[`\"'%s]+$", "")
-end
-
-local function hash(list)
-	if #list == 0 then
-		return ""
-	end
-	table.sort(list)
-	return table.concat(list, "|")
-end
-
-local function is_file_ref(ref)
-	return (type(ref.id) == "string" and (ref.id:match("^<file>") or ref.id:match("^<buf>")))
-		or (type(ref.source) == "string" and (ref.source:match("%.file$") or ref.source:match("%.buffer$")))
-end
-
-local function id_to_path(id)
-	return id:match("^<file>(.*)</file>$") or id:match("^<buf>(.*)</buf>$") or id
-end
-
--- Find first existing file in directory
-local function find_first_file(dir, names)
-	for _, name in ipairs(names) do
-		-- Use path separator for cross-platform compatibility
-		local sep = package.config:sub(1, 1)
-		local path = dir .. sep .. name
-		if vim.fn.filereadable(path) == 1 then
-			return path
-		end
-	end
-end
 
 -- Extract file paths from chat
 local function collect_paths(bufnr)
@@ -420,9 +371,7 @@ local function patch_buffer_slash_command()
 
 	local ok, BufferCmd = pcall(require, "codecompanion.strategies.chat.slash_commands.buffer")
 	if not ok then
-		vim.schedule(function()
-			vim.notify("[Rules] Could not patch /buffer command", vim.log.levels.WARN)
-		end)
+		utils.notify("Could not patch /buffer command", vim.log.levels.WARN, "Rules")
 		return
 	end
 
@@ -443,15 +392,13 @@ end
 
 -- Setup function
 function M.setup(opts)
-	if opts then
-		M.config = vim.tbl_deep_extend("force", M.config, opts)
-	end
+	M.config = config_utils.merge_config(DEFAULT_CONFIG, opts)
 
 	patch_buffer_slash_command()
 
-	log(vim.inspect(M.config))
+	utils.log(vim.inspect(M.config), M.config.debug)
 
-	local grp = vim.api.nvim_create_augroup("CodeCompanionRules", { clear = true })
+	local grp = config_utils.create_augroup("CodeCompanionRules")
 
 	vim.api.nvim_create_autocmd("User", {
 		group = grp,
@@ -468,8 +415,7 @@ function M.setup(opts)
 		pattern = "i:n",
 		callback = function()
 			local bufnr = vim.api.nvim_get_current_buf()
-			local filetype = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
-			if filetype == "codecompanion" then
+			if chat_utils.is_chat_buffer(bufnr) then
 				on_mode(bufnr)
 			end
 		end,
@@ -502,31 +448,43 @@ function M.setup(opts)
 		end,
 	})
 
-	vim.api.nvim_create_user_command("CodeCompanionRulesProcess", function()
-		on_mode(vim.api.nvim_get_current_buf())
-	end, { desc = "Re-evaluate rule references now" })
-
-	vim.api.nvim_create_user_command("CodeCompanionRulesDebug", function()
-		M.config.debug = not M.config.debug
-		log("CodeCompanion-Rules debug = " .. tostring(M.config.debug))
-	end, { desc = "Toggle rules debug" })
-
-	vim.api.nvim_create_user_command("CodeCompanionRulesEnable", function()
-		M.config.enabled = true
-		notify("Extension enabled")
-		on_mode(vim.api.nvim_get_current_buf())
-	end, { desc = "Enable CodeCompanion-Rules extension" })
-
-	vim.api.nvim_create_user_command("CodeCompanionRulesDisable", function()
-		M.config.enabled = false
-		for bufnr in pairs(enabled) do
-			enabled[bufnr] = nil
-		end
-		for bufnr in pairs(fingerprint) do
-			fingerprint[bufnr] = nil
-		end
-		notify("Extension disabled")
-	end, { desc = "Disable CodeCompanionRules extension" })
+	-- Setup user commands
+	config_utils.setup_commands("CodeCompanionRules", {
+		Process = {
+			callback = function()
+				on_mode(vim.api.nvim_get_current_buf())
+			end,
+			desc = "Re-evaluate rule references now"
+		},
+		Debug = {
+			callback = function()
+				M.config.debug = not M.config.debug
+				utils.log("CodeCompanion-Rules debug = " .. tostring(M.config.debug), true)
+			end,
+			desc = "Toggle rules debug"
+		},
+		Enable = {
+			callback = function()
+				M.config.enabled = true
+				utils.notify("Extension enabled", nil, "CodeCompanionRules")
+				on_mode(vim.api.nvim_get_current_buf())
+			end,
+			desc = "Enable CodeCompanion-Rules extension"
+		},
+		Disable = {
+			callback = function()
+				M.config.enabled = false
+				for bufnr in pairs(enabled) do
+					enabled[bufnr] = nil
+				end
+				for bufnr in pairs(fingerprint) do
+					fingerprint[bufnr] = nil
+				end
+				utils.notify("Extension disabled", nil, "CodeCompanionRules")
+			end,
+			desc = "Disable CodeCompanion-Rules extension"
+		}
+	})
 end
 
 return M

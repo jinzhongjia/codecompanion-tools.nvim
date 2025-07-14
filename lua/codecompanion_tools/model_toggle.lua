@@ -1,3 +1,7 @@
+local utils = require("codecompanion_tools.utils")
+local chat_utils = require("codecompanion_tools.chat")
+local config_utils = require("codecompanion_tools.config")
+
 local M = {}
 
 ---@alias ModelName string
@@ -16,20 +20,8 @@ local original_adapters = {}
 ---@type table<integer, integer>
 local sequence_indices = {}
 
----@return CodeCompanion.Chat|nil
-local function get_chat_for_buffer(bufnr)
-	local chat_strategy = require("codecompanion.strategies.chat")
-	return chat_strategy.buf_get_chat and chat_strategy.buf_get_chat(bufnr) or nil
-end
-
 local function load_config()
-	local cfg = require("codecompanion.config")
-	return (
-		cfg.extensions
-		and cfg.extensions["codecompanion-tools"]
-		and cfg.extensions["codecompanion-tools"].opts
-		and cfg.extensions["codecompanion-tools"].opts.model_toggle
-	) or {}
+	return config_utils.get_extension_config("codecompanion-tools", "model_toggle")
 end
 
 -- Toggle using sequence mode
@@ -39,7 +31,7 @@ end
 local function toggle_sequence_mode(bufnr, chat, cfg)
 	local sequence = cfg.sequence
 	local current_adapter = chat.adapter.name
-	local current_model = (type(chat.adapter.model) == "table" and chat.adapter.model.name) or chat.settings.model
+	local current_model = chat_utils.get_current_model(chat)
 	local original = original_adapters[bufnr]
 
 	-- Filter sequence for current adapter
@@ -51,7 +43,7 @@ local function toggle_sequence_mode(bufnr, chat, cfg)
 	end
 
 	if #adapter_sequence == 0 then
-		vim.notify(
+		utils.notify(
 			string.format("No models configured for current adapter '%s' in sequence", current_adapter),
 			vim.log.levels.WARN
 		)
@@ -95,10 +87,9 @@ local function toggle_sequence_mode(bufnr, chat, cfg)
 	end
 
 	-- Apply the target model
-	chat:apply_model(target_model)
-	chat:apply_settings()
+	chat_utils.apply_model(chat, target_model)
 
-	vim.notify(string.format("Switched to %s:%s", current_adapter, target_model), vim.log.levels.INFO)
+	utils.notify(string.format("Switched to %s:%s", current_adapter, target_model))
 end
 
 -- Toggle using models mode
@@ -116,12 +107,12 @@ local function toggle_models_mode(bufnr, chat, cfg)
 	elseif type(configured_models) == "table" then
 		model_list = configured_models
 	else
-		vim.notify(string.format("No models configured for adapter '%s'", adapter_name), vim.log.levels.WARN)
+		utils.notify(string.format("No models configured for adapter '%s'", adapter_name), vim.log.levels.WARN)
 		return
 	end
 
 	if #model_list == 0 then
-		vim.notify(string.format("Empty model list for adapter '%s'", adapter_name), vim.log.levels.WARN)
+		utils.notify(string.format("Empty model list for adapter '%s'", adapter_name), vim.log.levels.WARN)
 		return
 	end
 
@@ -133,7 +124,7 @@ local function toggle_models_mode(bufnr, chat, cfg)
 		model_indices[bufnr][adapter_name] = 1
 	end
 
-	local current = (type(chat.adapter.model) == "table" and chat.adapter.model.name) or chat.settings.model
+	local current = chat_utils.get_current_model(chat)
 	local original = original_adapters[bufnr].model
 
 	-- Determine target model based on current state
@@ -169,18 +160,17 @@ local function toggle_models_mode(bufnr, chat, cfg)
 		end
 	end
 
-	chat:apply_model(target)
-	chat:apply_settings()
+	chat_utils.apply_model(chat, target)
 
-	vim.notify(string.format("Switched model to %s", target), vim.log.levels.INFO)
+	utils.notify(string.format("Switched model to %s", target))
 end
 
 -- Toggle between models in chat buffer
 ---@param bufnr integer
 local function toggle_model(bufnr)
-	local chat = get_chat_for_buffer(bufnr)
+	local chat = chat_utils.get_chat(bufnr)
 	if not chat or not chat.adapter then
-		vim.notify("No CodeCompanion chat in this buffer", vim.log.levels.WARN)
+		utils.notify("No CodeCompanion chat in this buffer", vim.log.levels.WARN)
 		return
 	end
 
@@ -188,7 +178,7 @@ local function toggle_model(bufnr)
 
 	-- Store original adapter and model the first time
 	if original_adapters[bufnr] == nil then
-		local current_model = (type(chat.adapter.model) == "table" and chat.adapter.model.name) or chat.settings.model
+		local current_model = chat_utils.get_current_model(chat)
 		original_adapters[bufnr] = {
 			adapter = chat.adapter.name,
 			model = current_model,
@@ -207,35 +197,23 @@ end
 ---@param opts ModelToggleOpts
 local function setup_keymaps(opts)
 	local key = opts.keymap or "<S-Tab>"
-	local cfg = require("codecompanion.config")
-
-	if cfg.strategies and cfg.strategies.chat and type(cfg.strategies.chat.keymaps) == "table" then
-		cfg.strategies.chat.keymaps.toggle_model = {
-			modes = { n = key },
-			description = "Toggle chat model",
-			callback = function()
-				toggle_model(vim.api.nvim_get_current_buf())
-			end,
-		}
+	
+	local function toggle_current_buffer()
+		toggle_model(vim.api.nvim_get_current_buf())
 	end
-
-	vim.api.nvim_create_autocmd("FileType", {
-		pattern = "codecompanion",
-		callback = function(args)
-			vim.keymap.set("n", key, function()
-				toggle_model(args.buf)
-			end, {
-				buffer = args.buf,
-				desc = "Toggle chat model",
-				silent = true,
-			})
-		end,
-	})
+	
+	-- Setup strategy keymap
+	config_utils.setup_strategy_keymap(key, toggle_current_buffer, "Toggle chat model", "toggle_model")
+	
+	-- Setup buffer-local keymap
+	config_utils.setup_buffer_keymap(key, function()
+		toggle_model(vim.api.nvim_get_current_buf())
+	end, "Toggle chat model")
 end
 
 -- Cleanup caches on buffer deletion
 local function setup_autocmds()
-	local group = vim.api.nvim_create_augroup("CodeCompanionModelToggle", { clear = true })
+	local group = config_utils.create_augroup("CodeCompanionModelToggle")
 	vim.api.nvim_create_autocmd("BufDelete", {
 		group = group,
 		callback = function(args)
