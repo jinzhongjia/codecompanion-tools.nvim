@@ -1,2 +1,0 @@
--- This file is no longer needed
--- The extension has been moved to init.lua

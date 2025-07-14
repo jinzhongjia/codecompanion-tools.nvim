@@ -7,14 +7,6 @@ local M = {}
 ---@field models? table<string, ModelName|ModelName[]> Model(s) per adapter
 ---@field sequence? table<integer, {adapter: string, model: string}> Predefined adapter+model sequence
 
----@class ModelToggleConfig
----@field keymap string? Keymap to toggle models
----@field models? table<string, ModelName|ModelName[]> Model(s) per adapter
----@field sequence? table<integer, {adapter: string, model: string}> Predefined adapter+model sequence
-
----@type table<integer, ModelName>
-local original_models = {}
-
 ---@type table<integer, table<string, integer>>
 local model_indices = {}
 
@@ -26,13 +18,10 @@ local sequence_indices = {}
 
 ---@return CodeCompanion.Chat|nil
 local function get_chat_for_buffer(bufnr)
-	-- Directly require the chat strategy module
 	local chat_strategy = require("codecompanion.strategies.chat")
-	if type(chat_strategy.buf_get_chat) ~= "function" then
-		return nil
-	end
-	return chat_strategy.buf_get_chat(bufnr)
+	return chat_strategy.buf_get_chat and chat_strategy.buf_get_chat(bufnr) or nil
 end
+
 local function load_config()
 	local cfg = require("codecompanion.config")
 	return (
@@ -43,21 +32,17 @@ local function load_config()
 	) or {}
 end
 
--- Forward declarations
-local toggle_sequence_mode
-local toggle_models_mode
-
--- Toggle using sequence mode (cross-adapter switching)
+-- Toggle using sequence mode
 ---@param bufnr integer
 ---@param chat table
----@param cfg ModelToggleConfig
-toggle_sequence_mode = function(bufnr, chat, cfg)
+---@param cfg ModelToggleOpts
+local function toggle_sequence_mode(bufnr, chat, cfg)
 	local sequence = cfg.sequence
 	local current_adapter = chat.adapter.name
 	local current_model = (type(chat.adapter.model) == "table" and chat.adapter.model.name) or chat.settings.model
 	local original = original_adapters[bufnr]
 
-	-- Filter sequence to only include items for current adapter
+	-- Filter sequence for current adapter
 	local adapter_sequence = {}
 	for _, item in ipairs(sequence) do
 		if item.adapter == current_adapter then
@@ -116,15 +101,15 @@ toggle_sequence_mode = function(bufnr, chat, cfg)
 	vim.notify(string.format("Switched to %s:%s", current_adapter, target_model), vim.log.levels.INFO)
 end
 
--- Toggle using models mode (same adapter, different models)
+-- Toggle using models mode
 ---@param bufnr integer
 ---@param chat table
----@param cfg ModelToggleConfig
-toggle_models_mode = function(bufnr, chat, cfg)
+---@param cfg ModelToggleOpts
+local function toggle_models_mode(bufnr, chat, cfg)
 	local adapter_name = chat.adapter.name
 	local configured_models = cfg.models and cfg.models[adapter_name]
 
-	-- Support both single model (string) and multiple models (table)
+	-- Support single model or multiple models
 	local model_list = {}
 	if type(configured_models) == "string" then
 		model_list = { configured_models }
@@ -190,7 +175,7 @@ toggle_models_mode = function(bufnr, chat, cfg)
 	vim.notify(string.format("Switched model to %s", target), vim.log.levels.INFO)
 end
 
--- Toggle between the original and alternate model in the chat buffer
+-- Toggle between models in chat buffer
 ---@param bufnr integer
 local function toggle_model(bufnr)
 	local chat = get_chat_for_buffer(bufnr)
@@ -218,7 +203,7 @@ local function toggle_model(bufnr)
 	end
 end
 
--- Setup buffer-local and strategy keymaps
+-- Setup keymaps
 ---@param opts ModelToggleOpts
 local function setup_keymaps(opts)
 	local key = opts.keymap or "<S-Tab>"
@@ -248,13 +233,12 @@ local function setup_keymaps(opts)
 	})
 end
 
--- Cleanup original model cache on buffer deletion
+-- Cleanup caches on buffer deletion
 local function setup_autocmds()
 	local group = vim.api.nvim_create_augroup("CodeCompanionModelToggle", { clear = true })
 	vim.api.nvim_create_autocmd("BufDelete", {
 		group = group,
 		callback = function(args)
-			original_models[args.buf] = nil
 			model_indices[args.buf] = nil
 			original_adapters[args.buf] = nil
 			sequence_indices[args.buf] = nil

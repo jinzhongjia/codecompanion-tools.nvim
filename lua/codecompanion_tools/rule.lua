@@ -6,7 +6,7 @@ local M = {}
 ---@field enabled boolean
 ---@field extract_file_paths_from_chat_message? fun(message:table):string[]|nil
 
--- Configuration with defaults
+-- Default configuration
 M.config = {
 	rules_filenames = {
 		".rules",
@@ -29,7 +29,7 @@ M.config = {
 local enabled = {}
 local fingerprint = {}
 
--- Helper functions
+-- Utility functions
 local function log(msg)
 	if M.config.debug then
 		print("[Rules] " .. msg)
@@ -43,7 +43,10 @@ local function notify(msg, level)
 end
 
 local function normalize(p)
-	return vim.fn.fnamemodify(p, ":p"):gsub("/$", "")
+	-- Cross-platform path normalization
+	local path = vim.fn.fnamemodify(p, ":p")
+	-- Remove trailing slash/backslash
+	return path:gsub("[/\\]$", "")
 end
 
 local function clean(p)
@@ -67,27 +70,25 @@ local function id_to_path(id)
 	return id:match("^<file>(.*)</file>$") or id:match("^<buf>(.*)</buf>$") or id
 end
 
--- Find the first existing file from a list of names in a directory
+-- Find first existing file in directory
 local function find_first_file(dir, names)
 	for _, name in ipairs(names) do
-		local path = dir .. "/" .. name
+		-- Use path separator for cross-platform compatibility
+		local sep = package.config:sub(1, 1)
+		local path = dir .. sep .. name
 		if vim.fn.filereadable(path) == 1 then
 			return path
-		end
-		if r then
-			r.opts = ref_opts(r.opts) -- normalize flags
 		end
 	end
 end
 
--- Extract paths mentioned in chat
+-- Extract file paths from chat
 local function collect_paths(bufnr)
 	if not M.config.enabled then
 		return {}
 	end
 
-	-- Check if this is a codecompanion buffer
-	local buftype = vim.api.nvim_get_option_value("buftype", { buf = bufnr })
+	-- Check codecompanion buffer
 	local filetype = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
 	if filetype ~= "codecompanion" then
 		log("collect_paths → not a codecompanion buffer, skipping")
@@ -180,7 +181,9 @@ local function collect_rules(paths)
 
 	local function ascend(dir)
 		dir = normalize(dir)
-		while dir ~= "/" and dir:match("^" .. vim.pesc(proj)) do
+		-- Cross-platform root check
+		local is_root = (dir == "/" or dir:match("^%a:[/\\]?$")) -- Unix root or Windows drive root
+		while not is_root and dir:match("^" .. vim.pesc(proj)) do
 			local f = find_first_file(dir, M.config.rules_filenames)
 			if f and not seen[f] then
 				out[#out + 1] = f
@@ -191,6 +194,7 @@ local function collect_rules(paths)
 				break
 			end
 			dir = parent
+			is_root = (dir == "/" or dir:match("^%a:[/\\]?$"))
 		end
 	end
 
@@ -199,14 +203,16 @@ local function collect_rules(paths)
 	end
 
 	table.sort(out, function(a, b)
-		return select(2, a:gsub("/", "")) > select(2, b:gsub("/", ""))
+		-- Sort by depth (deeper first) - cross-platform
+		local sep = "[/\\]"
+		return select(2, a:gsub(sep, "")) > select(2, b:gsub(sep, ""))
 	end)
 
 	log(("collect_rules → %d rule file(s)"):format(#out))
 	return out
 end
 
--- Keep chat.refs in sync with rule files
+-- Sync chat refs with rule files
 local function sync_refs(bufnr, rule_files)
 	if not M.config.enabled then
 		return
@@ -255,7 +261,7 @@ local function sync_refs(bufnr, rule_files)
 		return
 	end
 
-	-- Desired refs keyed by project-relative path
+	-- Build desired refs map
 	local desired = {}
 	for _, abs in ipairs(rule_files) do
 		local rel = vim.fn.fnamemodify(abs, ":.")
@@ -265,7 +271,7 @@ local function sync_refs(bufnr, rule_files)
 		desired[rel] = { id = id, bufnr = (id:match("^<buf>") and bn or nil) }
 	end
 
-	-- Existing refs - de-duplicate & index by path
+	-- Index existing refs by path
 	local existing = {}
 	for i = #chat.refs, 1, -1 do
 		local r = chat.refs[i]
@@ -279,7 +285,7 @@ local function sync_refs(bufnr, rule_files)
 		end
 	end
 
-	-- Ensure every desired ref exists & is normalized
+	-- Add missing refs
 	local added_cnt = 0
 	for path, want in pairs(desired) do
 		local r = existing[path]
@@ -298,7 +304,7 @@ local function sync_refs(bufnr, rule_files)
 		end
 	end
 
-	-- Drop obsolete rule-managed refs
+	-- Remove obsolete refs
 	local removed_cnt = 0
 	for i = #chat.refs, 1, -1 do
 		local r = chat.refs[i]
@@ -318,10 +324,10 @@ local function sync_refs(bufnr, rule_files)
 		end
 	end
 
-	-- Feedback + context re-render
+	-- Notify and re-render if changed
 	if added_cnt + removed_cnt > 0 then
 		log(string.format("sync_refs → +%d -%d", added_cnt, removed_cnt))
-		-- Create notification message parts
+		-- Build notification message
 		local msg_parts = {}
 		if added_cnt > 0 then
 			table.insert(msg_parts, ("Added %d rule reference(s)"):format(added_cnt))
@@ -338,7 +344,7 @@ local function sync_refs(bufnr, rule_files)
 	end
 end
 
--- Main worker
+-- Main processing function
 local function process(bufnr)
 	if not M.config.enabled then
 		return
@@ -363,7 +369,7 @@ local function on_mode(bufnr)
 		return
 	end
 
-	-- Only process codecompanion buffers
+	-- Check buffer type
 	local filetype = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
 	if filetype ~= "codecompanion" then
 		return
@@ -378,7 +384,7 @@ local function on_submit(bufnr)
 		return
 	end
 
-	-- Only process codecompanion buffers
+	-- Check buffer type
 	local filetype = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
 	if filetype ~= "codecompanion" then
 		return
@@ -392,7 +398,7 @@ local function on_tool(bufnr)
 		return
 	end
 
-	-- Only process codecompanion buffers
+	-- Check buffer type
 	local filetype = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
 	if filetype ~= "codecompanion" then
 		return
@@ -405,7 +411,7 @@ local function on_clear(bufnr)
 	enabled[bufnr], fingerprint[bufnr] = nil, nil
 end
 
--- Patch buffer slash command
+-- Patch buffer slash command for event integration
 local function patch_buffer_slash_command()
 	if _G.__codecompanion_rules_buffer_patch then
 		return
@@ -415,7 +421,7 @@ local function patch_buffer_slash_command()
 	local ok, BufferCmd = pcall(require, "codecompanion.strategies.chat.slash_commands.buffer")
 	if not ok then
 		vim.schedule(function()
-			vim.notify("[CodeCompanionRules] Could not patch /buffer slash-command", vim.log.levels.WARN)
+			vim.notify("[Rules] Could not patch /buffer command", vim.log.levels.WARN)
 		end)
 		return
 	end

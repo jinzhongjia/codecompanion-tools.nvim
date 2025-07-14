@@ -1,13 +1,13 @@
--- 使用示例：如何在 CodeCompanion 中配置 codecompanion-tools
+-- Usage example: How to configure codecompanion-tools in CodeCompanion
 
 require("codecompanion").setup({
-	-- 其他 CodeCompanion 配置...
+	-- Other CodeCompanion configuration...
 	extensions = {
-		-- 现在可以直接使用扩展名，不需要 callback
-		-- CodeCompanion 会自动查找 lua/codecompanion/_extensions/codecompanion-tools/init.lua
+		-- Use extension name directly, no callback needed
+		-- CodeCompanion will auto-find lua/codecompanion/_extensions/codecompanion-tools/init.lua
 		["codecompanion-tools"] = {
 			opts = {
-				-- 规则管理器配置
+				-- Rules manager configuration
 				rules = {
 					enabled = true,
 					debug = false,
@@ -23,20 +23,20 @@ require("codecompanion").setup({
 						"CLAUDE.md",
 						".codecompanionrules",
 					},
-					-- 自定义文件路径提取函数（可选）
+					-- Custom file path extraction function (optional)
 					extract_file_paths_from_chat_message = function(message)
-						-- 从消息内容中提取文件路径
-						-- 返回路径数组
+						-- Extract file paths from message content
+						-- Return array of paths
 						return {}
 					end,
 				},
 
-				-- 模型切换配置
+				-- Model toggle configuration
 				model_toggle = {
 					enabled = true,
-					keymap = "<S-Tab>", -- 切换快捷键
+					keymap = "<S-Tab>", -- Toggle shortcut
 
-					-- 序列模式：跨适配器切换（推荐）
+					-- Sequence mode: cross-adapter switching (recommended)
 					sequence = {
 						{ adapter = "copilot", model = "gpt-4.1" },
 						{ adapter = "copilot", model = "o1-mini" },
@@ -44,8 +44,8 @@ require("codecompanion").setup({
 						{ adapter = "openai", model = "gpt-4o" },
 					},
 
-					-- 或者使用模型列表模式：同适配器不同模型
-					-- （如果设置了 sequence，则忽略 models）
+					-- Or use models mode: same adapter, different models
+					-- (models is ignored if sequence is set)
 					-- models = {
 					--   copilot = {
 					--     "gpt-4.1",
@@ -67,10 +67,10 @@ require("codecompanion").setup({
 		},
 	},
 
-	-- 其他 CodeCompanion 配置...
+	-- Other CodeCompanion configuration...
 })
 
--- 手动调用模型切换（可选）
+-- Manually call model toggle (optional)
 -- vim.keymap.set("n", "<leader>tm", function()
 --   require("codecompanion").extensions["codecompanion-tools"].toggle_model(vim.api.nvim_get_current_buf())
 -- end, { desc = "Toggle model" })
