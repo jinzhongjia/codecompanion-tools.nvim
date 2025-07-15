@@ -25,6 +25,17 @@ Quickly switch between LLM models in any CodeCompanion chat buffer.
 - **Customizable Keymaps**: Default keymap is `<S-Tab>` but fully customizable
 - **Instant Notifications**: Shows which model you've switched to
 
+### DAG Checklist System
+
+Create and manage complex task checklists with dependency management and parallel execution.
+
+- **Dependency Management**: Define task dependencies to ensure proper execution order
+- **Parallel Execution**: Automatically execute independent read-only tasks in parallel for efficiency
+- **Task Status Tracking**: Track task progress with states (pending, in_progress, completed, blocked)
+- **Access Mode Control**: Specify task access modes (read, write, readwrite) for safe parallel execution
+- **Persistent Storage**: Automatically save and restore checklists across sessions
+- **Progress Monitoring**: Visual progress tracking with completion statistics
+
 ## Installation
 
 ### Using [lazy.nvim](https://github.com/folke/lazy.nvim)
@@ -82,6 +93,11 @@ Quickly switch between LLM models in any CodeCompanion chat buffer.
               --   openai = { "gpt-4o", "gpt-4o-mini" },
               -- },
             },
+
+            -- DAG checklist system options
+            dag = {
+              enabled = true,
+            },
           },
         },
       },
@@ -117,7 +133,15 @@ lua/
 └── codecompanion_tools/
     ├── init.lua                  <-- Backward compatibility entry
     ├── model_toggle.lua          <-- Model switching functionality
-    └── rule.lua                  <-- Rule management functionality
+    ├── rule.lua                  <-- Rule management functionality
+    └── dag/                      <-- DAG checklist system
+        ├── dag_tools.lua         <-- DAG tool definitions
+        ├── dag_manager.lua       <-- DAG business logic
+        ├── dag_formatter.lua     <-- DAG output formatting
+        ├── dag_types.lua         <-- DAG type definitions
+        ├── dag_executor.lua      <-- Parallel execution engine
+        ├── storage.lua           <-- Persistent storage
+        └── shared_types.lua      <-- Shared type definitions
 ```
 
 ## Configuration
@@ -199,6 +223,31 @@ model_toggle = {
 }
 ```
 
+### DAG Checklist System
+
+Configure the DAG checklist system for task management:
+
+```lua
+dag = {
+  enabled = true, -- Enable/disable DAG functionality
+}
+```
+
+The DAG system provides tools for creating and managing complex task checklists with dependency management. It automatically handles:
+
+- **Dependency Resolution**: Ensures tasks are executed in the correct order
+- **Parallel Execution**: Automatically runs independent read-only tasks in parallel
+- **Persistent Storage**: Saves checklists to `~/.local/share/nvim/codecompanion-tools/dag_checklists.json`
+- **Progress Tracking**: Monitors task completion and provides visual feedback
+
+#### Task Access Modes
+
+The DAG system uses access modes to determine which tasks can run in parallel:
+
+- **`read`**: Safe for parallel execution (file analysis, search operations)
+- **`write`**: Requires sequential execution (file modifications, destructive operations)
+- **`readwrite`**: Requires sequential execution (operations that both read and modify)
+
 #### Model Toggle Modes
 
 **Sequence Mode** (recommended for cross-adapter switching):
@@ -253,6 +302,60 @@ Use the configured keymap (default `<S-Tab>`) in any CodeCompanion chat buffer t
 -- Toggle model in current buffer
 require("codecompanion").extensions["codecompanion-tools"].toggle_model(vim.api.nvim_get_current_buf())
 ```
+
+### DAG Checklist System
+
+The DAG system provides a unified `checklist` tool for task management:
+
+#### Available Tool
+
+The DAG system provides a unified **`checklist`** tool with action-based interface:
+
+#### Usage Examples
+
+**Create a checklist:**
+```lua
+checklist({
+  action = "create",
+  goal = "Implement user authentication system",
+  tasks = {
+    { text = "Analyze current codebase", mode = "read", dependencies = {} },
+    { text = "Review security requirements", mode = "read", dependencies = {} },
+    { text = "Design database schema", mode = "readwrite", dependencies = {1} },
+    { text = "Write unit tests", mode = "write", dependencies = {3} },
+    { text = "Implement auth logic", mode = "write", dependencies = {2, 3, 4} }
+  },
+  subject = "Auth system implementation",
+  body = "Complete authentication system with proper dependency management"
+})
+```
+
+**List all checklists:**
+```lua
+checklist({ action = "list" })
+```
+
+**Check status of a specific checklist:**
+```lua
+checklist({ action = "status", checklist_id = "2" })
+```
+
+**Complete a task:**
+```lua
+checklist({
+  action = "complete",
+  task_id = "1",
+  subject = "Completed codebase analysis",
+  body = "Analyzed authentication patterns and identified key areas for improvement"
+})
+```
+
+#### Automatic Behavior
+
+- **Parallel Execution**: Tasks marked with `mode = "read"` and no dependencies execute automatically in parallel
+- **Dependency Management**: Tasks with dependencies are automatically blocked until prerequisites complete
+- **Progress Tracking**: The system automatically advances to the next available task when one completes
+- **Persistent Storage**: All checklists are saved and restored across Neovim sessions
 
 ## Supported Rule Files
 

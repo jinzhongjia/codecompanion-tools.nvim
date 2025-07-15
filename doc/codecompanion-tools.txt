@@ -15,10 +15,11 @@ CONTENTS                                        *codecompanion-tools-contents*
 3. Configuration ....................... |codecompanion-tools-configuration|
 4. Rule Manager ........................ |codecompanion-tools-rule-manager|
 5. Model Toggle ........................ |codecompanion-tools-model-toggle|
-6. Commands ............................ |codecompanion-tools-commands|
-7. API ................................. |codecompanion-tools-api|
-8. Troubleshooting ..................... |codecompanion-tools-troubleshooting|
-9. Changelog ........................... |codecompanion-tools-changelog|
+6. DAG Checklist System ................ |codecompanion-tools-dag-system|
+7. Commands ............................ |codecompanion-tools-commands|
+8. API ................................. |codecompanion-tools-api|
+9. Troubleshooting ..................... |codecompanion-tools-troubleshooting|
+10. Changelog .......................... |codecompanion-tools-changelog|
 
 ==============================================================================
 INTRODUCTION                                *codecompanion-tools-introduction*
@@ -29,6 +30,8 @@ CodeCompanion.nvim, providing enhanced functionality for AI-assisted coding.
 Features:
 - Automatic rule file detection and management
 - Quick model switching in chat buffers
+- DAG checklist system with dependency management
+- Parallel execution of independent tasks
 - Intelligent context management
 - Support for multiple AI tools and rule formats
 
@@ -102,10 +105,13 @@ Default configuration: >
               sequence = {},
               models = {},
             },
+            dag = {
+              enabled = true,
+            },
           },
         },
       },
-    }
+    })
 <
 
 ==============================================================================
@@ -244,6 +250,140 @@ Models Mode:
 - Supports single model (string) or multiple models (table) per adapter
 
 ==============================================================================
+DAG CHECKLIST SYSTEM                          *codecompanion-tools-dag-system*
+
+The DAG (Directed Acyclic Graph) checklist system provides structured task
+management with dependency resolution and parallel execution capabilities.
+
+------------------------------------------------------------------------------
+DAG SYSTEM OPTIONS                         *codecompanion-tools-dag-system-opts*
+
+dag.enabled                                      *codecompanion-tools-dag-enabled*
+    Type: boolean
+    Default: true
+    
+    Enable or disable the DAG checklist system functionality.
+
+------------------------------------------------------------------------------
+DAG SYSTEM FEATURES                     *codecompanion-tools-dag-system-features*
+
+Dependency Management:
+- Define task dependencies to ensure proper execution order
+- Automatically blocks tasks until prerequisites are completed
+- Detects and prevents circular dependencies
+
+Parallel Execution:
+- Tasks marked with mode="read" and no dependencies execute in parallel
+- Safe for read-only operations like file analysis and searches
+- Improves efficiency by running independent tasks simultaneously
+
+Task Status Tracking:
+- pending: Task ready to start
+- in_progress: Task currently being worked on
+- completed: Task finished successfully
+- blocked: Task waiting for dependencies
+
+Access Mode Control:
+- read: Safe for parallel execution (analysis, search operations)
+- write: Sequential execution required (file modifications)
+- readwrite: Sequential execution required (read and modify operations)
+
+Persistent Storage:
+- Automatically saves checklists to ~/.local/share/nvim/codecompanion-tools/
+- Restores checklists across Neovim sessions
+- Maintains task history and progress logs
+
+------------------------------------------------------------------------------
+DAG TOOL                                        *codecompanion-tools-dag-tool*
+
+The DAG system provides a unified checklist tool accessible through CodeCompanion:
+
+checklist                                       *codecompanion-tools-checklist*
+    Manage task checklists with dependency resolution and parallel execution.
+    
+    Actions:
+        create: Create a new checklist with tasks and dependencies
+        list: List all existing checklists
+        status: Get detailed status of a checklist
+        complete: Mark a task as complete
+    
+    Parameters:
+        action (string): Required action to perform
+        
+        For create action:
+            goal (string): Description of the overall goal
+            tasks (table): Array of task definitions
+            subject (string): Commit subject/title
+            body (string): Detailed explanation
+        
+        For status action:
+            checklist_id (string, optional): ID of checklist to check
+        
+        For complete action:
+            task_id (string): ID of task to mark complete
+            subject (string): Commit subject/title
+            body (string): Detailed explanation
+            checklist_id (string, optional): ID of checklist to update
+    
+    Task Definition:
+        text (string): Task description
+        dependencies (table): Array of task indices that must complete first
+        mode (string): "read", "write", or "readwrite"
+    
+    Examples: >
+        -- Create a checklist
+        checklist({
+          action = "create",
+          goal = "Implement authentication system",
+          tasks = {
+            { text = "Analyze current code", mode = "read", dependencies = {} },
+            { text = "Design schema", mode = "readwrite", dependencies = {1} },
+            { text = "Write tests", mode = "write", dependencies = {2} },
+            { text = "Implement logic", mode = "write", dependencies = {1, 2, 3} }
+          },
+          subject = "Auth implementation",
+          body = "Complete authentication system with dependencies"
+        })
+        
+        -- List all checklists
+        checklist({ action = "list" })
+        
+        -- Get status of a specific checklist
+        checklist({ action = "status", checklist_id = "2" })
+        
+        -- Complete a task
+        checklist({
+          action = "complete",
+          task_id = "1",
+          subject = "Completed analysis",
+          body = "Analyzed codebase and identified key patterns"
+        })
+<
+
+------------------------------------------------------------------------------
+DAG SYSTEM BEHAVIOR                     *codecompanion-tools-dag-system-behavior*
+
+Automatic Task Progression:
+- When a checklist is created, the first available task is set to in_progress
+- Completing a task automatically advances to the next available task
+- Tasks with unsatisfied dependencies are marked as blocked
+
+Parallel Execution:
+- Read-only tasks with no dependencies execute automatically in parallel
+- Results are captured and stored in the checklist log
+- Improves efficiency for independent analysis tasks
+
+Dependency Resolution:
+- Uses topological sorting to determine optimal execution order
+- Prevents circular dependencies at creation time
+- Updates task statuses when dependencies are satisfied
+
+Progress Tracking:
+- Visual indicators show task status (✓ completed, ~ in progress, ! blocked)
+- Progress statistics track completion rates
+- Detailed logs capture task history and file modifications
+
+==============================================================================
 COMMANDS                                        *codecompanion-tools-commands*
 
 :CodeCompanionRulesProcess                       *:CodeCompanionRulesProcess*
@@ -308,8 +448,31 @@ Model Toggle Not Working~
     2. Check that models are configured for your current adapter
     3. Ensure the keymap isn't conflicting with other bindings
 
+DAG Tools Not Available~
+    1. Ensure DAG system is enabled: dag = { enabled = true }
+    2. Check that CodeCompanion has loaded the tools properly
+    3. Verify all DAG module files are present in lua/codecompanion_tools/dag/
+
+DAG Checklist Not Saving~
+    1. Check that the data directory is writable
+    2. Verify ~/.local/share/nvim/codecompanion-tools/ exists
+    3. Ensure proper file permissions for the data directory
+
+Tasks Not Executing in Parallel~
+    1. Verify tasks are marked with mode = "read"
+    2. Ensure tasks have no dependencies (dependencies = {})
+    3. Check that DAG executor is properly loaded
+
 ==============================================================================
 CHANGELOG                                      *codecompanion-tools-changelog*
+
+v1.1.0
+    - Added DAG checklist system with dependency management
+    - Parallel execution support for independent tasks
+    - Task status tracking and progress monitoring
+    - Persistent storage for checklists
+    - Four new tools: create, list, status, complete_task
+    - Cross-platform compatibility improvements
 
 v1.0.0
     - Initial release

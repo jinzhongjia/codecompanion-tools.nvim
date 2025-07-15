@@ -91,4 +91,12 @@ function M.notify(msg, level, title)
 	end)
 end
 
+--- Get data directory for persistent storage
+---@return string
+function M.get_data_dir()
+	local data_dir = vim.fn.stdpath("data") .. "/codecompanion-tools"
+	vim.fn.mkdir(data_dir, "p")
+	return data_dir
+end
+
 return M
