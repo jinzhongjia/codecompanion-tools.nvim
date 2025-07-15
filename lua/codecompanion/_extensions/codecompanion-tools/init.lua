@@ -47,62 +47,10 @@ function M.setup(opts)
 			print("[CodeCompanion-Tools] Loaded DAG tools:", vim.inspect(vim.tbl_keys(M.dag_tools)))
 		end
 
-		-- Try to register tools using the correct method according to documentation
-		local success = false
-
-		-- Method 1: Use codecompanion.config directly (recommended approach)
-		local config_ok, config = pcall(require, "codecompanion.config")
-		if config_ok and config.strategies and config.strategies.chat then
-			if debug then
-				print("[CodeCompanion-Tools] Found codecompanion.config, registering tools...")
-			end
-
-			if not config.strategies.chat.tools then
-				config.strategies.chat.tools = {}
-			end
-
-			for tool_name, tool_config in pairs(M.dag_tools) do
-				config.strategies.chat.tools[tool_name] = tool_config
-				if debug then
-					print("[CodeCompanion-Tools] Registered tool via config: " .. tool_name)
-				end
-			end
-			success = true
-		end
-
-		-- Method 2: Fallback to codecompanion module
-		if not success then
-			local cc_ok, codecompanion = pcall(require, "codecompanion")
-			if cc_ok and codecompanion.config then
-				if debug then
-					print("[CodeCompanion-Tools] Using codecompanion module config...")
-				end
-
-				if not codecompanion.config.strategies then
-					codecompanion.config.strategies = {}
-				end
-				if not codecompanion.config.strategies.chat then
-					codecompanion.config.strategies.chat = {}
-				end
-				if not codecompanion.config.strategies.chat.tools then
-					codecompanion.config.strategies.chat.tools = {}
-				end
-
-				for tool_name, tool_config in pairs(M.dag_tools) do
-					codecompanion.config.strategies.chat.tools[tool_name] = tool_config
-					if debug then
-						print("[CodeCompanion-Tools] Registered tool via codecompanion: " .. tool_name)
-					end
-				end
-				success = true
-			end
-		end
-
-		-- Method 3: Store for later retrieval
-		if not success and debug then
-			print("[CodeCompanion-Tools] Could not register tools directly, storing for later retrieval")
-		end
-
+		-- Register tools with CodeCompanion
+		local tool_registry = require("codecompanion_tools.tool_registry")
+		local success = tool_registry.register_tools(M.dag_tools, debug)
+		
 		if debug then
 			print("[CodeCompanion-Tools] Tool registration success:", success)
 		end

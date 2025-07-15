@@ -1,34 +1,9 @@
 -- dag/checklist_tool.lua
 -- Unified checklist tool with action-based interface
 
-local dag_manager_module = require("codecompanion_tools.dag.dag_manager")
-local dag_formatter_module = require("codecompanion_tools.dag.dag_formatter")
+local dag_system = require("codecompanion_tools.dag.dag_system")
 local dag_executor = require("codecompanion_tools.dag.dag_executor")
-local storage_module = require("codecompanion_tools.dag.storage")
-
--- Create DAG system instance
----@return table
-local function get_dag_system()
-	local storage = storage_module.new()
-	local manager = dag_manager_module.new(storage)
-	local formatter = dag_formatter_module.new()
-
-	return {
-		storage = storage,
-		manager = manager,
-		formatter = formatter,
-	}
-end
-
--- Get the shared DAG system instance
-local dag_system = nil
----@return table
-local function get_shared_dag_system()
-	if not dag_system then
-		dag_system = get_dag_system()
-	end
-	return dag_system
-end
+local validation = require("codecompanion_tools.dag.validation")
 
 ---@class ChecklistTool
 local ChecklistTool = {
@@ -40,28 +15,26 @@ local ChecklistTool = {
 		---@param cb function
 		function(agent, args, input, cb)
 			local action = args.action
-			local system = get_shared_dag_system()
+			local system = dag_system.get_instance()
 			local manager = system.manager
 			local formatter = system.formatter
 
 			if action == "create" then
+				-- Validation
+				local valid, err = validation.validate_create_params(args)
+				if not valid then
+					return cb({ status = "error", data = {}, message = err })
+				end
+				
 				local goal = args.goal
 				local tasks_input = args.tasks or {}
 				local subject = args.subject
 				local body = args.body
-
-				-- Validation
-				if not goal or goal == "" then
-					return cb({ status = "error", data = {}, message = "Goal is required" })
-				end
-				if not tasks_input or #tasks_input == 0 then
-					return cb({ status = "error", data = {}, message = "At least one task is required" })
-				end
-				if not subject or subject == "" then
-					return cb({ status = "error", data = {}, message = "Subject is required" })
-				end
-				if not body then
-					return cb({ status = "error", data = {}, message = "Body is required" })
+				
+				-- Validate tasks input
+				local tasks_valid, tasks_err = validation.validate_tasks_input(tasks_input)
+				if not tasks_valid then
+					return cb({ status = "error", data = {}, message = tasks_err })
 				end
 
 				-- Parse tasks with dependencies and modes
@@ -131,6 +104,12 @@ local ChecklistTool = {
 				end
 				return cb({ status = "success", data = checklist })
 			elseif action == "complete" then
+				-- Validation
+				local valid, err = validation.validate_complete_params(args)
+				if not valid then
+					return cb({ status = "error", data = {}, message = err })
+				end
+				
 				local checklist_id = args.checklist_id
 				local task_id = args.task_id
 				local subject = args.subject
@@ -139,15 +118,6 @@ local ChecklistTool = {
 				local checklist, err = manager:get_checklist(checklist_id)
 				if not checklist then
 					return cb({ status = "error", data = {}, message = err })
-				end
-				if not task_id then
-					return cb({ status = "error", data = {}, message = "task_id is required" })
-				end
-				if not subject or subject == "" then
-					return cb({ status = "error", data = {}, message = "subject is required" })
-				end
-				if not body then
-					return cb({ status = "error", data = {}, message = "body is required" })
 				end
 
 				local success, msg = manager:complete_task(agent, checklist, task_id, subject, body)
@@ -278,7 +248,7 @@ Features:
 		success = function(tool, agent, cmd, stdout)
 			local response_data = stdout[1]
 			local action = tool.args.action
-			local system = get_shared_dag_system()
+			local system = dag_system.get_instance()
 			local formatter = system.formatter
 			local manager = system.manager
 

@@ -134,13 +134,16 @@ lua/
     ├── init.lua                  <-- Backward compatibility entry
     ├── model_toggle.lua          <-- Model switching functionality
     ├── rule.lua                  <-- Rule management functionality
+    ├── tool_registry.lua         <-- Simplified tool registration
     └── dag/                      <-- DAG checklist system
-        ├── dag_tools.lua         <-- DAG tool definitions
+        ├── checklist_tool.lua    <-- Unified checklist tool
         ├── dag_manager.lua       <-- DAG business logic
         ├── dag_formatter.lua     <-- DAG output formatting
         ├── dag_types.lua         <-- DAG type definitions
         ├── dag_executor.lua      <-- Parallel execution engine
+        ├── dag_system.lua        <-- Shared DAG system singleton
         ├── storage.lua           <-- Persistent storage
+        ├── validation.lua        <-- Input validation utilities
         └── shared_types.lua      <-- Shared type definitions
 ```
 
