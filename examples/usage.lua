@@ -7,10 +7,12 @@ require("codecompanion").setup({
 		-- CodeCompanion will auto-find lua/codecompanion/_extensions/codecompanion-tools/init.lua
 		["codecompanion-tools"] = {
 			opts = {
+				-- Global debug setting (applies to all tools)
+				debug = false, -- 设置为 true 开启所有工具的调试信息
+
 				-- Rules manager configuration
 				rules = {
 					enabled = true,
-					debug = false,
 					rules_filenames = {
 						".rules",
 						".goosehints",
@@ -81,7 +83,7 @@ require("codecompanion").setup({
 -- end, { desc = "Toggle model" })
 
 -- DAG Checklist System Usage Examples
--- 
+--
 -- The DAG system provides a unified checklist tool for managing complex task workflows with dependencies.
 -- The tool is available in CodeCompanion chat buffers as a function call.
 --
@@ -109,7 +111,7 @@ require("codecompanion").setup({
 -- Example 4: Complete the current in-progress task
 -- checklist({
 --   action = "complete",
---   task_id = "1", 
+--   task_id = "1",
 --   subject = "Completed codebase analysis",
 --   body = "Analyzed existing authentication patterns and identified key improvement areas"
 -- })
@@ -117,7 +119,7 @@ require("codecompanion").setup({
 -- Available Actions:
 -- - create: Create a new checklist with tasks and dependencies
 -- - list: List all existing checklists
--- - status: Get detailed status of a checklist  
+-- - status: Get detailed status of a checklist
 -- - complete: Mark a task as complete
 --
 -- Key Features:

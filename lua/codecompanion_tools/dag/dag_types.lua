@@ -39,32 +39,32 @@ local M = {}
 
 -- Task status constants (extends base types)
 M.TASK_STATUS = {
-  PENDING = "pending",
-  IN_PROGRESS = "in_progress",
-  COMPLETED = "completed",
-  BLOCKED = "blocked" -- New status for tasks waiting on dependencies
+	PENDING = "pending",
+	IN_PROGRESS = "in_progress",
+	COMPLETED = "completed",
+	BLOCKED = "blocked", -- New status for tasks waiting on dependencies
 }
 
 -- Log action constants (extends base types)
 M.LOG_ACTIONS = {
-  CREATE = "create",
-  COMPLETE_TASK = "complete_task",
-  UPDATE = "update",
-  PARALLEL_EXECUTION = "parallel_execution" -- New action for parallel task execution
+	CREATE = "create",
+	COMPLETE_TASK = "complete_task",
+	UPDATE = "update",
+	PARALLEL_EXECUTION = "parallel_execution", -- New action for parallel task execution
 }
 
 -- Task access mode constants for safety
 M.TASK_MODE = {
-  READ = "read",          -- Safe for parallel execution - read-only operations
-  WRITE = "write",        -- Requires context - modifies files/state
-  READWRITE = "readwrite" -- Requires context - both reads and writes
+	READ = "read", -- Safe for parallel execution - read-only operations
+	WRITE = "write", -- Requires context - modifies files/state
+	READWRITE = "readwrite", -- Requires context - both reads and writes
 }
 
 -- Dependency resolution constants
 M.DEPENDENCY_STATUS = {
-  SATISFIED = "satisfied",
-  UNSATISFIED = "unsatisfied",
-  CIRCULAR = "circular"
+	SATISFIED = "satisfied",
+	UNSATISFIED = "unsatisfied",
+	CIRCULAR = "circular",
 }
 
 return M

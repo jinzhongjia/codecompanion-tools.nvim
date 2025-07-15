@@ -176,6 +176,12 @@ local function toggle_model(bufnr)
 
 	local cfg = load_config()
 
+	if cfg.debug then
+		print("[CodeCompanion-Tools] Model toggle triggered for buffer", bufnr)
+		print("[CodeCompanion-Tools] Current adapter:", chat.adapter.name)
+		print("[CodeCompanion-Tools] Current model:", chat_utils.get_current_model(chat))
+	end
+
 	-- Store original adapter and model the first time
 	if original_adapters[bufnr] == nil then
 		local current_model = chat_utils.get_current_model(chat)
@@ -183,12 +189,21 @@ local function toggle_model(bufnr)
 			adapter = chat.adapter.name,
 			model = current_model,
 		}
+		if cfg.debug then
+			print("[CodeCompanion-Tools] Stored original adapter/model:", vim.inspect(original_adapters[bufnr]))
+		end
 	end
 
 	-- Check if sequence mode is configured
 	if cfg.sequence and type(cfg.sequence) == "table" and #cfg.sequence > 0 then
+		if cfg.debug then
+			print("[CodeCompanion-Tools] Using sequence mode")
+		end
 		toggle_sequence_mode(bufnr, chat, cfg)
 	else
+		if cfg.debug then
+			print("[CodeCompanion-Tools] Using models mode")
+		end
 		toggle_models_mode(bufnr, chat, cfg)
 	end
 end
@@ -228,6 +243,16 @@ end
 ---@param opts ModelToggleOpts
 function M.setup(opts)
 	opts = opts or {}
+
+	if opts.debug then
+		print("[CodeCompanion-Tools] Model toggle setup with keymap:", opts.keymap or "<S-Tab>")
+		if opts.sequence and #opts.sequence > 0 then
+			print("[CodeCompanion-Tools] Model toggle using sequence mode with", #opts.sequence, "models")
+		elseif opts.models then
+			print("[CodeCompanion-Tools] Model toggle using models mode")
+		end
+	end
+
 	setup_keymaps(opts)
 	setup_autocmds()
 end

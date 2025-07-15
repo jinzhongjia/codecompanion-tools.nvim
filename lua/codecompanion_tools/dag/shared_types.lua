@@ -9,8 +9,8 @@ local M = {}
 
 -- Tool response status constants
 M.RESPONSE_STATUS = {
-  SUCCESS = "success",
-  ERROR = "error"
+	SUCCESS = "success",
+	ERROR = "error",
 }
 
 -- Create a standardized tool response
@@ -18,10 +18,10 @@ M.RESPONSE_STATUS = {
 ---@param data any
 ---@return StandardToolResponse
 function M.create_response(status, data)
-  return {
-    status = status,
-    data = data
-  }
+	return {
+		status = status,
+		data = data,
+	}
 end
 
 return M

@@ -146,6 +146,21 @@ lua/
 
 ## Configuration
 
+### Global Options
+
+```lua
+{
+  extensions = {
+    ["codecompanion-tools"] = {
+      opts = {
+        debug = false,  -- Enable debug logging for all tools
+        -- ... other options
+      },
+    },
+  },
+}
+```
+
 ### Rule Manager
 
 The rule manager automatically detects and includes rule files in your chat context. You can customize which files it looks for:
@@ -397,6 +412,14 @@ lua/codecompanion/_extensions/codecompanion-tools/init.lua
 1. Verify you're in a CodeCompanion chat buffer (`filetype = "codecompanion"`)
 2. Check that models are configured for your current adapter
 3. Ensure the keymap isn't conflicting with other bindings
+
+### DAG Checklist Tool Not Available
+
+1. Ensure DAG system is enabled: `dag = { enabled = true }`
+2. Enable debug mode to see tool registration: `debug = true` (global option)
+3. Check for errors in the console output when starting Neovim
+4. Verify all DAG module files are present in `lua/codecompanion_tools/dag/`
+5. Try the `:CodeCompanionToolsDebug` command to check tool registration status
 
 ## Backward Compatibility
 
