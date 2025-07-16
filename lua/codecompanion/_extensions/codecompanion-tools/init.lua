@@ -50,7 +50,7 @@ function M.setup(opts)
 		-- Register tools with CodeCompanion
 		local tool_registry = require("codecompanion_tools.tool_registry")
 		local success = tool_registry.register_tools(M.dag_tools, debug)
-		
+
 		if debug then
 			print("[CodeCompanion-Tools] Tool registration success:", success)
 		end
@@ -60,12 +60,37 @@ function M.setup(opts)
 		end
 	end
 
+	-- Setup context compression
+	if opts.context_compression and opts.context_compression.enabled ~= false then
+		if debug then
+			print("[CodeCompanion-Tools] Setting up context compression...")
+		end
+
+		-- Pass global debug to context compression
+		local compression_opts = vim.tbl_deep_extend("force", opts.context_compression or {}, { debug = debug })
+		local compression_module = require("codecompanion_tools.context_compression")
+		compression_module.setup(compression_opts)
+		compression_module.init()
+
+		-- 注意：压缩工具已移除，但保留核心功能
+		M.compression_tools = {}
+
+		if debug then
+			print("[CodeCompanion-Tools] Context compression core functionality loaded (tools removed)")
+		end
+	else
+		if debug then
+			print("[CodeCompanion-Tools] Context compression is disabled")
+		end
+	end
+
 	-- Create debug command
 	vim.api.nvim_create_user_command("CodeCompanionToolsDebug", function()
 		print("=== CodeCompanion Tools Debug ===")
 		print("Extension loaded:", M ~= nil)
 		print("Global debug mode:", M.debug or false)
 		print("DAG tools:", M.dag_tools and vim.inspect(vim.tbl_keys(M.dag_tools)) or "nil")
+		print("Compression tools:", "removed (core functionality available via commands)")
 
 		local ok, codecompanion = pcall(require, "codecompanion")
 		if ok and codecompanion.config then
@@ -102,8 +127,7 @@ M.exports = {
 --- Return tools configuration for CodeCompanion
 ---@return table
 function M.get_tools()
-	-- Only show debug info if DAG debug is enabled
-	-- We don't have access to opts here, so we'll make this always silent
+	-- Only return DAG tools (compression tools removed)
 	return M.dag_tools or {}
 end
 

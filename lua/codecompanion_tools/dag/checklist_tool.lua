@@ -25,12 +25,12 @@ local ChecklistTool = {
 				if not valid then
 					return cb({ status = "error", data = {}, message = err })
 				end
-				
+
 				local goal = args.goal
 				local tasks_input = args.tasks or {}
 				local subject = args.subject
 				local body = args.body
-				
+
 				-- Validate tasks input
 				local tasks_valid, tasks_err = validation.validate_tasks_input(tasks_input)
 				if not tasks_valid then
@@ -109,7 +109,7 @@ local ChecklistTool = {
 				if not valid then
 					return cb({ status = "error", data = {}, message = err })
 				end
-				
+
 				local checklist_id = args.checklist_id
 				local task_id = args.task_id
 				local subject = args.subject

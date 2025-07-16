@@ -36,6 +36,17 @@ Create and manage complex task checklists with dependency management and paralle
 - **Persistent Storage**: Automatically save and restore checklists across sessions
 - **Progress Monitoring**: Visual progress tracking with completion statistics
 
+### Context Compression System
+
+Intelligent context compression to optimize chat performance and manage memory usage.
+
+- **Smart Compression**: Automatically compresses chat context when thresholds are exceeded
+- **Multiple Strategies**: Simple truncation, structured summarization, and priority-based compression
+- **Automatic Triggers**: Monitors token count, memory usage, and message count
+- **Quality Preservation**: Maintains important context markers and system messages
+- **Automatic Operation**: Fully automatic compression when thresholds are exceeded
+- **Configurable Thresholds**: Customize trigger conditions and compression behavior
+
 ## Installation
 
 ### Using [lazy.nvim](https://github.com/folke/lazy.nvim)
@@ -97,6 +108,35 @@ Create and manage complex task checklists with dependency management and paralle
             -- DAG checklist system options
             dag = {
               enabled = true,
+            },
+
+            -- Context compression options
+            context_compression = {
+              enabled = true,
+              auto_trigger = true,
+              debug = false,
+              
+              -- Trigger thresholds
+              token_threshold = 8000,
+              memory_threshold = 500, -- MB
+              message_count_threshold = 20,
+              
+              -- Strategy configuration
+              primary_strategy = "simple_truncation",
+              fallback_strategy = "simple_truncation",
+              
+              -- Simple truncation settings
+              simple_truncation = {
+                keep_recent_messages = 5,
+                keep_system_messages = true,
+                preserve_context_markers = true,
+              },
+              
+              -- User interface
+              ui = {
+                auto_notify = true,
+                show_compression_stats = true,
+              },
             },
           },
         },
@@ -374,6 +414,58 @@ checklist({
 - **Dependency Management**: Tasks with dependencies are automatically blocked until prerequisites complete
 - **Progress Tracking**: The system automatically advances to the next available task when one completes
 - **Persistent Storage**: All checklists are saved and restored across Neovim sessions
+
+### Context Compression System
+
+The context compression system intelligently manages chat context to optimize performance and memory usage.
+
+#### Automatic Compression
+
+Context compression is automatically triggered when:
+- Token count exceeds threshold (default: 8000 tokens)
+- Memory usage exceeds threshold (default: 500 MB)
+- Message count exceeds threshold (default: 20 messages)
+
+The system uses a three-tier urgency system:
+- **Green**: No compression needed
+- **Yellow**: Compression recommended (80% of threshold)
+- **Red**: Immediate compression required (threshold exceeded)
+
+#### Automatic Operation
+
+The compression system works automatically in the background:
+- Monitors chat resources continuously
+- Triggers compression when thresholds are exceeded
+- Provides notifications when compression occurs
+
+#### Compression Strategies
+
+**Simple Truncation** (MVP - Default):
+- Keeps recent messages and system messages
+- Preserves important context markers
+- Fast and reliable compression
+
+**Structured Summarization** (Future):
+- Uses LLM to create intelligent summaries
+- Maintains context continuity
+- Higher quality but slower
+
+**Priority-based Truncation** (Future):
+- Evaluates message importance
+- Preserves key information
+- Balanced approach
+
+#### Automatic Operation Only
+
+The compression system operates automatically without any manual commands or tools.
+
+#### Automatic Behavior
+
+- **Smart Monitoring**: Continuously monitors chat resources
+- **Threshold Detection**: Automatically triggers compression when needed
+- **Quality Preservation**: Maintains important context and system messages
+- **Notification System**: Provides feedback on compression actions
+- **Error Recovery**: Falls back to simpler strategies if compression fails
 
 ## Supported Rule Files
 
