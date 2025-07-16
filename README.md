@@ -72,7 +72,7 @@ Intelligent context compression to optimize chat performance and manage memory u
 
 ### Installation Methods
 
-### Using [lazy.nvim](https://github.com/folke/lazy.nvim)
+#### Using [lazy.nvim](https://github.com/folke/lazy.nvim)
 
 ```lua
 {
@@ -84,7 +84,6 @@ Intelligent context compression to optimize chat performance and manage memory u
     require("codecompanion").setup({
       extensions = {
         ["codecompanion-tools"] = {
-          -- CodeCompanion automatically loads lua/codecompanion/_extensions/codecompanion-tools/init.lua
           opts = {
             -- Rule manager options
             rules = {
@@ -169,7 +168,7 @@ Intelligent context compression to optimize chat performance and manage memory u
 }
 ```
 
-### Using [packer.nvim](https://github.com/wbthomason/packer.nvim)
+#### Using [packer.nvim](https://github.com/wbthomason/packer.nvim)
 
 ```lua
 use {
@@ -197,26 +196,41 @@ lua/
 │           └── init.lua          <-- Main extension entry point
 └── codecompanion_tools/
     ├── init.lua                  <-- Backward compatibility entry
+    ├── config.lua                <-- Configuration utilities
     ├── model_toggle.lua          <-- Model switching functionality
     ├── rule.lua                  <-- Rule management functionality
-    ├── tool_registry.lua         <-- Simplified tool registration
-    └── dag/                      <-- DAG checklist system
-        ├── checklist_tool.lua    <-- Unified checklist tool
-        ├── dag_manager.lua       <-- DAG business logic
-        ├── dag_formatter.lua     <-- DAG output formatting
-        ├── dag_types.lua         <-- DAG type definitions
-        ├── dag_executor.lua      <-- Parallel execution engine
-        ├── dag_system.lua        <-- Shared DAG system singleton
-        ├── storage.lua           <-- Persistent storage
-        ├── validation.lua        <-- Input validation utilities
-        └── shared_types.lua      <-- Shared type definitions
+    ├── tool_registry.lua         <-- Tool registration system
+    ├── chat.lua                  <-- Chat utilities
+    ├── utils.lua                 <-- Common utilities
+    ├── dag/                      <-- DAG checklist system
+    │   ├── checklist_tool.lua    <-- Unified checklist tool
+    │   ├── dag_manager.lua       <-- DAG business logic
+    │   ├── dag_formatter.lua     <-- DAG output formatting
+    │   ├── dag_types.lua         <-- DAG type definitions
+    │   ├── dag_executor.lua      <-- Parallel execution engine
+    │   ├── dag_system.lua        <-- Shared DAG system singleton
+    │   ├── storage.lua           <-- Persistent storage
+    │   ├── validation.lua        <-- Input validation utilities
+    │   └── shared_types.lua      <-- Shared type definitions
+    └── context_compression/      <-- Context compression system
+        ├── init.lua              <-- Main compression entry point
+        ├── config.lua            <-- Compression configuration
+        ├── compression_manager.lua <-- Core compression logic
+        ├── trigger_detector.lua   <-- Threshold monitoring
+        ├── importance_scorer.lua  <-- Message importance scoring
+        ├── quality_assessor.lua   <-- Compression quality assessment
+        ├── strategy_selector.lua  <-- Strategy selection logic
+        └── strategies/           <-- Compression strategies
+            ├── simple_truncation.lua
+            ├── structured_summary.lua
+            └── priority_truncation.lua
 ```
 
 ## ⚙️ Configuration
 
 ### Configuration Philosophy
 
-codeccompanion-tools.nvim is designed to work intelligently with minimal configuration. All features have sensible defaults and can be customized as needed.
+codecompanion-tools.nvim is designed to work intelligently with minimal configuration. All features have sensible defaults and can be customized as needed.
 
 ### Basic Configuration
 
@@ -234,7 +248,7 @@ require("codecompanion").setup({
 
 ### Advanced Configuration
 
-### Global Options
+#### Global Options
 
 ```lua
 {
@@ -249,9 +263,9 @@ require("codecompanion").setup({
 }
 ```
 
-### Rule Manager
+#### Rule Manager
 
-The rule manager automatically detects and includes rule files in your chat context. You can customize which files it looks for:
+The rule manager automatically detects and includes rule files in your chat context:
 
 ```lua
 rules = {
@@ -276,31 +290,7 @@ rules = {
 }
 ```
 
-#### How Rule Detection Works
-
-1. **Trigger Conditions**: 
-   - Chat buffer creation
-   - Mode change (insert to normal)
-   - After message submission
-   - After tool execution
-   - Manual trigger via `:CodeCompanionRulesProcess`
-
-2. **Path Collection**:
-   - From chat references (`/file`, `/buffer` commands)
-   - From tool output patterns in messages
-   - From custom extraction function
-
-3. **Rule File Search**:
-   - Searches parent directories upward from each referenced file
-   - Looks for rule files in order of preference
-   - Prioritizes deeper directories (more specific rules)
-
-4. **Automatic Reference Management**:
-   - Adds rule files as pinned references
-   - Removes obsolete references
-   - Updates context automatically
-
-### Model Toggle
+#### Model Toggle
 
 Configure model switching behavior:
 
@@ -326,9 +316,9 @@ model_toggle = {
 }
 ```
 
-### DAG Checklist System
+#### DAG Checklist System
 
-Configure the DAG checklist system for task management:
+The DAG system is enabled by default:
 
 ```lua
 dag = {
@@ -336,42 +326,39 @@ dag = {
 }
 ```
 
-The DAG system provides tools for creating and managing complex task checklists with dependency management. It automatically handles:
+#### Context Compression
 
-- **Dependency Resolution**: Ensures tasks are executed in the correct order
-- **Parallel Execution**: Automatically runs independent read-only tasks in parallel
-- **Persistent Storage**: Saves checklists to `~/.local/share/nvim/codecompanion-tools/dag_checklists.json`
-- **Progress Tracking**: Monitors task completion and provides visual feedback
+Configure automatic context compression:
 
-#### Task Access Modes
-
-The DAG system uses access modes to determine which tasks can run in parallel:
-
-- **`read`**: Safe for parallel execution (file analysis, search operations)
-- **`write`**: Requires sequential execution (file modifications, destructive operations)
-- **`readwrite`**: Requires sequential execution (operations that both read and modify)
-
-#### Model Toggle Modes
-
-**Sequence Mode** (recommended for cross-adapter switching):
-- Cycles through a predefined sequence of adapter+model combinations
-- **Important**: Only shows models for your current adapter
-- To switch adapters, use CodeCompanion's built-in `ga` keymap first
-
-**Models Mode** (for same-adapter switching):
-- Cycles through models within the same adapter
-- Supports single model (string) or multiple models (array) per adapter
-
-#### Usage Flow Example
-
-For sequence mode with current adapter `copilot`:
-
-1. Start with default model (e.g., `copilot:gpt-4o-2024-08-06`)
-2. Press `<S-Tab>` → switches to `copilot:gpt-4` (first in sequence for copilot)
-3. Press `<S-Tab>` → switches back to original `copilot:gpt-4o-2024-08-06`
-4. Manually change adapter to `anthropic` (using `ga`)
-5. Press `<S-Tab>` → switches to `anthropic:claude-3-5-sonnet-20241022`
-6. Press `<S-Tab>` → switches back to anthropic's default model
+```lua
+context_compression = {
+  enabled = true,
+  auto_trigger = true,
+  debug = false,
+  
+  -- Trigger thresholds
+  token_threshold = 8000,
+  memory_threshold = 500, -- MB
+  message_count_threshold = 20,
+  
+  -- Strategy configuration
+  primary_strategy = "simple_truncation",
+  fallback_strategy = "simple_truncation",
+  
+  -- Strategy-specific settings
+  simple_truncation = {
+    keep_recent_messages = 5,
+    keep_system_messages = true,
+    preserve_context_markers = true,
+  },
+  
+  -- User interface
+  ui = {
+    auto_notify = true,
+    show_compression_stats = true,
+  },
+}
+```
 
 ## 🎯 Usage
 
@@ -390,37 +377,15 @@ The rule manager works automatically in the background. Manual commands are avai
 - `:CodeCompanionRulesEnable` - Enable the rule manager
 - `:CodeCompanionRulesDisable` - Disable the rule manager
 
-#### Automatic Operation
-
-1. **File Reference Detection**: When you reference files in chat via:
-   - Slash commands (`/file`, `/buffer`)
-   - Tool outputs
-   - Custom extraction patterns
-
-2. **Rule File Discovery**: Automatically searches parent directories for rule files
-
-3. **Context Management**: Adds relevant rule files as pinned references
-
-### Model Toggle
+#### Model Toggle
 
 Use the configured keymap (default `<S-Tab>`) in any CodeCompanion chat buffer to cycle between models.
 
-#### Programmatic Usage
-
-```lua
--- Toggle model in current buffer
-require("codecompanion").extensions["codecompanion-tools"].toggle_model(vim.api.nvim_get_current_buf())
-```
-
-### DAG Checklist System
+#### DAG Checklist System
 
 The DAG system provides a unified `checklist` tool for task management:
 
-#### Available Tool
-
-The DAG system provides a unified **`checklist`** tool with action-based interface:
-
-#### Usage Examples
+##### Usage Examples
 
 **Create a checklist:**
 ```lua
@@ -459,70 +424,16 @@ checklist({
 })
 ```
 
-#### Automatic Behavior
+#### Context Compression System
 
-- **Parallel Execution**: Tasks marked with `mode = "read"` and no dependencies execute automatically in parallel
-- **Dependency Management**: Tasks with dependencies are automatically blocked until prerequisites complete
-- **Progress Tracking**: The system automatically advances to the next available task when one completes
-- **Persistent Storage**: All checklists are saved and restored across Neovim sessions
+The context compression system works automatically in the background:
 
-### Context Compression System
-
-The context compression system intelligently manages chat context to optimize performance and memory usage.
-
-#### Automatic Compression
-
-Context compression is automatically triggered when:
-- Token count exceeds threshold (default: 8000 tokens)
-- Memory usage exceeds threshold (default: 500 MB)
-- Message count exceeds threshold (default: 20 messages)
-
-The system uses a three-tier urgency system:
-- **Green**: No compression needed
-- **Yellow**: Compression recommended (80% of threshold)
-- **Red**: Immediate compression required (threshold exceeded)
-
-#### Automatic Operation
-
-The compression system works automatically in the background:
-- Monitors chat resources continuously
-- Triggers compression when thresholds are exceeded
-- Provides notifications when compression occurs
-
-#### Compression Strategies
-
-**Simple Truncation** (MVP - Default):
-- Keeps recent messages and system messages
-- Preserves important context markers
-- Fast and reliable compression
-
-**Structured Summarization** (Future):
-- Uses LLM to create intelligent summaries
-- Maintains context continuity
-- Higher quality but slower
-
-**Priority-based Truncation** (Future):
-- Evaluates message importance
-- Preserves key information
-- Balanced approach
-
-#### Automatic Operation Only
-
-The compression system operates automatically without any manual commands or tools.
-
-#### Automatic Behavior
-
-- **Smart Monitoring**: Continuously monitors chat resources
-- **Threshold Detection**: Automatically triggers compression when needed
+- **Automatic Monitoring**: Continuously monitors chat resources
+- **Threshold Detection**: Triggers compression when thresholds are exceeded
 - **Quality Preservation**: Maintains important context and system messages
 - **Notification System**: Provides feedback on compression actions
-- **Error Recovery**: Falls back to simpler strategies if compression fails
 
 ## 📄 Supported Rule Files
-
-**Multi-Platform AI Tool Support**
-
-codeccompanion-tools.nvim supports rule files from various AI development tools, ensuring maximum compatibility across different workflows:
 
 The extension supports common rule file formats used by various AI tools:
 
@@ -561,42 +472,39 @@ extensions = {
 
 #### Specific Issues
 
-### Extension Not Loading
+##### Extension Not Loading
 
 If you see the error:
 ```
 Error loading extension codecompanion-tools: module 'codecompanion._extensions.codecompanion-tools' not found
 ```
 
-Ensure your directory structure matches the required layout above. The extension must be in:
+Ensure your directory structure matches the required layout. The extension must be in:
 ```
 lua/codecompanion/_extensions/codecompanion-tools/init.lua
 ```
 
-### Rule Files Not Being Added
+##### Rule Files Not Being Added
 
 1. Enable debug mode: `rules = { debug = true }`
 2. Check the output for path collection and rule discovery
 3. Verify rule files exist in parent directories of referenced files
 4. Ensure files are within your project root (`getcwd()`)
 
-### Model Toggle Not Working
+##### Model Toggle Not Working
 
 1. Verify you're in a CodeCompanion chat buffer (`filetype = "codecompanion"`)
 2. Check that models are configured for your current adapter
 3. Ensure the keymap isn't conflicting with other bindings
 
-### DAG Checklist Tool Not Available
+##### DAG Checklist Tool Not Available
 
 1. Ensure DAG system is enabled: `dag = { enabled = true }`
-2. Enable debug mode to see tool registration: `debug = true` (global option)
+2. Enable debug mode to see tool registration: `debug = true`
 3. Check for errors in the console output when starting Neovim
-4. Verify all DAG module files are present in `lua/codecompanion_tools/dag/`
-5. Try the `:CodeCompanionToolsDebug` command to check tool registration status
+4. Try the `:CodeCompanionToolsDebug` command to check tool registration status
 
 ## 🔄 Backward Compatibility
-
-**Seamless Migration**
 
 The original `require("codecompanion_tools").setup()` call is still supported and will automatically delegate to the proper extension system. This ensures existing configurations continue to work without modification.
 
@@ -637,13 +545,9 @@ Contributions are welcome! Here's how you can help:
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes with proper comments (see our code style)
+3. Make your changes with proper comments
 4. Test your changes thoroughly
 5. Submit a pull request with detailed description
-
-### Code Style
-
-This project follows comprehensive code commenting practices. All major functions and modules include detailed comments explaining their purpose, parameters, and behavior.
 
 ## 📜 License
 
