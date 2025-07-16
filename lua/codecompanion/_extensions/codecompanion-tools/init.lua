@@ -1,8 +1,25 @@
 ---@class CodeCompanion.Extension
+-- CodeCompanion Tools Extension
+--
+-- This is the main extension module that integrates codecompanion-tools with CodeCompanion.
+-- It provides a centralized setup interface for all tool components and handles the
+-- registration of tools with CodeCompanion.
+--
+-- Components managed by this extension:
+-- - Rule manager: Automated workflow rules
+-- - Model toggle: Quick model switching utilities
+-- - DAG tools: Checklist tools with dependency management
+-- - Context compression: Chat context compression system
+--
+-- The extension follows CodeCompanion's extension architecture and provides
+-- both setup configuration and runtime tool access.
 local M = {}
 
 --- Setup codecompanion-tools extension
----@param opts table Configuration options
+-- This function initializes all components of the codecompanion-tools extension
+-- based on the provided configuration options.
+--
+---@param opts table Configuration options with component-specific settings
 function M.setup(opts)
 	opts = opts or {}
 
@@ -84,7 +101,8 @@ function M.setup(opts)
 		end
 	end
 
-	-- Create debug command
+	-- Create debug command for troubleshooting
+	-- This command provides detailed information about the extension state
 	vim.api.nvim_create_user_command("CodeCompanionToolsDebug", function()
 		print("=== CodeCompanion Tools Debug ===")
 		print("Extension loaded:", M ~= nil)
@@ -117,17 +135,21 @@ function M.setup(opts)
 	end, {})
 end
 
---- Export functions
+--- Export functions for external use
+-- These functions provide programmatic access to tool functionality
 M.exports = {
+	-- Toggle model function - switches between different LLM models
 	toggle_model = function(bufnr)
 		return require("codecompanion_tools.model_toggle").exports.toggle_model(bufnr)
 	end,
 }
 
 --- Return tools configuration for CodeCompanion
----@return table
+-- This function provides the tool definitions that CodeCompanion will register
+---@return table Tool definitions for CodeCompanion integration
 function M.get_tools()
-	-- Only return DAG tools (compression tools removed)
+	-- Return only DAG tools (compression tools were removed from CodeCompanion integration)
+	-- Other tools are available via commands but not as CodeCompanion chat tools
 	return M.dag_tools or {}
 end
 

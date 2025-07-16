@@ -1,8 +1,23 @@
 # codecompanion-tools.nvim
 
-A collection of useful tools and extensions for [CodeCompanion.nvim](https://github.com/olimorris/codecompanion.nvim).
+A comprehensive collection of advanced tools and extensions for [CodeCompanion.nvim](https://github.com/olimorris/codecompanion.nvim), designed to enhance your AI-powered coding workflow with intelligent automation and productivity features.
 
-## Features
+## 🌟 Overview
+
+This extension provides a suite of sophisticated tools that seamlessly integrate with CodeCompanion to provide:
+
+- **Intelligent Rule Management**: Automatically discover and apply project-specific AI rules
+- **Flexible Model Switching**: Quick and easy switching between different LLM models
+- **Advanced Task Management**: Complex workflow orchestration with dependency resolution
+- **Smart Context Compression**: Intelligent chat context optimization for better performance
+
+All tools are designed to work automatically in the background while providing manual control when needed.
+
+## 🚀 Features
+
+### 📋 Complete Feature Set
+
+Here's what codecompanion-tools.nvim brings to your development workflow:
 
 ### Rule Manager
 
@@ -47,7 +62,15 @@ Intelligent context compression to optimize chat performance and manage memory u
 - **Automatic Operation**: Fully automatic compression when thresholds are exceeded
 - **Configurable Thresholds**: Customize trigger conditions and compression behavior
 
-## Installation
+## 📦 Installation
+
+### Requirements
+
+- Neovim 0.8.0+
+- [CodeCompanion.nvim](https://github.com/olimorris/codecompanion.nvim)
+- A configured LLM adapter (Anthropic, OpenAI, etc.)
+
+### Installation Methods
 
 ### Using [lazy.nvim](https://github.com/folke/lazy.nvim)
 
@@ -160,9 +183,11 @@ use {
 }
 ```
 
-## Directory Structure
+## 📁 Directory Structure
 
-The plugin uses the following directory structure to work with CodeCompanion's extension system:
+**CodeCompanion Extension Architecture**
+
+The plugin follows CodeCompanion's extension system architecture with a clean, modular structure:
 
 ```
 lua/
@@ -187,7 +212,27 @@ lua/
         └── shared_types.lua      <-- Shared type definitions
 ```
 
-## Configuration
+## ⚙️ Configuration
+
+### Configuration Philosophy
+
+codeccompanion-tools.nvim is designed to work intelligently with minimal configuration. All features have sensible defaults and can be customized as needed.
+
+### Basic Configuration
+
+The simplest setup requires just enabling the extension:
+
+```lua
+require("codecompanion").setup({
+  extensions = {
+    ["codecompanion-tools"] = {
+      -- All features enabled by default with smart defaults
+    },
+  },
+})
+```
+
+### Advanced Configuration
 
 ### Global Options
 
@@ -328,9 +373,15 @@ For sequence mode with current adapter `copilot`:
 5. Press `<S-Tab>` → switches to `anthropic:claude-3-5-sonnet-20241022`
 6. Press `<S-Tab>` → switches back to anthropic's default model
 
-## Usage
+## 🎯 Usage
 
-### Rule Manager
+### Getting Started
+
+Once installed, codecompanion-tools.nvim works automatically in the background. Most features are designed to be transparent and helpful without requiring manual intervention.
+
+### Individual Tool Usage
+
+#### Rule Manager
 
 The rule manager works automatically in the background. Manual commands are available:
 
@@ -467,7 +518,11 @@ The compression system operates automatically without any manual commands or too
 - **Notification System**: Provides feedback on compression actions
 - **Error Recovery**: Falls back to simpler strategies if compression fails
 
-## Supported Rule Files
+## 📄 Supported Rule Files
+
+**Multi-Platform AI Tool Support**
+
+codeccompanion-tools.nvim supports rule files from various AI development tools, ensuring maximum compatibility across different workflows:
 
 The extension supports common rule file formats used by various AI tools:
 
@@ -481,7 +536,30 @@ The extension supports common rule file formats used by various AI tools:
 - `CLAUDE.md` - Claude-specific rules
 - `.codecompanionrules` - CodeCompanion-specific rules
 
-## Troubleshooting
+## 🔧 Troubleshooting
+
+### Common Issues and Solutions
+
+#### Debug Mode
+
+Enable debug mode for detailed logging:
+
+```lua
+extensions = {
+  ["codecompanion-tools"] = {
+    opts = {
+      debug = true,  -- Enable global debug logging
+    },
+  },
+}
+```
+
+#### Available Debug Commands
+
+- `:CodeCompanionToolsDebug` - Show extension status and registered tools
+- `:CodeCompanionRulesDebug` - Toggle rule manager debug logging
+
+#### Specific Issues
 
 ### Extension Not Loading
 
@@ -516,15 +594,64 @@ lua/codecompanion/_extensions/codecompanion-tools/init.lua
 4. Verify all DAG module files are present in `lua/codecompanion_tools/dag/`
 5. Try the `:CodeCompanionToolsDebug` command to check tool registration status
 
-## Backward Compatibility
+## 🔄 Backward Compatibility
 
-The original `require("codecompanion_tools").setup()` call is still supported and will automatically delegate to the proper extension.
+**Seamless Migration**
 
-## Contributing
+The original `require("codecompanion_tools").setup()` call is still supported and will automatically delegate to the proper extension system. This ensures existing configurations continue to work without modification.
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+### Migration Guide
 
-## License
+**Old Configuration:**
+```lua
+require("codecompanion_tools").setup({
+  -- old configuration
+})
+```
+
+**New Configuration (Recommended):**
+```lua
+require("codecompanion").setup({
+  extensions = {
+    ["codecompanion-tools"] = {
+      opts = {
+        -- same configuration options
+      },
+    },
+  },
+})
+```
+
+## 🤝 Contributing
+
+### How to Contribute
+
+Contributions are welcome! Here's how you can help:
+
+1. **Bug Reports**: Open an issue with detailed reproduction steps
+2. **Feature Requests**: Suggest new features or improvements
+3. **Pull Requests**: Submit code changes with tests and documentation
+4. **Documentation**: Help improve documentation and examples
+
+### Development Setup
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes with proper comments (see our code style)
+4. Test your changes thoroughly
+5. Submit a pull request with detailed description
+
+### Code Style
+
+This project follows comprehensive code commenting practices. All major functions and modules include detailed comments explaining their purpose, parameters, and behavior.
+
+## 📜 License
 
 MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+**Made with ❤️ for the CodeCompanion.nvim community**
+
+*Enhance your AI-powered coding workflow with intelligent automation and advanced productivity features.*
 

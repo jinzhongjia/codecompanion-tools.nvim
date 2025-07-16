@@ -1,52 +1,77 @@
 -- dag/checklist_tool.lua
--- Unified checklist tool with action-based interface
+-- Unified Checklist Tool with Action-Based Interface
+--
+-- This module provides a comprehensive checklist tool for CodeCompanion that supports
+-- complex workflows with dependency management through a DAG (Directed Acyclic Graph) system.
+--
+-- Key features:
+-- - Create checklists with dependent tasks
+-- - Update task states and completion status
+-- - Validate dependencies and detect cycles
+-- - Execute tasks in proper dependency order
+-- - View formatted checklist outputs
+--
+-- The tool uses an action-based interface where each operation is specified
+-- by an 'action' parameter (create, update, view, etc.)
 
 local dag_system = require("codecompanion_tools.dag.dag_system")
 local dag_executor = require("codecompanion_tools.dag.dag_executor")
 local validation = require("codecompanion_tools.dag.validation")
 
 ---@class ChecklistTool
+-- The main checklist tool class that implements the CodeCompanion tool interface
 local ChecklistTool = {
-	name = "checklist",
+	name = "checklist", -- Tool identifier for CodeCompanion
+	-- Command handlers for the checklist tool
+	-- This array contains the main function that handles all checklist operations
 	cmds = {
-		---@param agent table
-		---@param args table
-		---@param input string
-		---@param cb function
+		-- Main command handler for all checklist actions
+		---@param agent table The CodeCompanion agent instance
+		---@param args table Command arguments including action and parameters
+		---@param input string Raw input string from the user
+		---@param cb function Callback function to return results
 		function(agent, args, input, cb)
+			-- Extract the action to perform from arguments
 			local action = args.action
+			
+			-- Get the shared DAG system instance and its components
 			local system = dag_system.get_instance()
-			local manager = system.manager
-			local formatter = system.formatter
+			local manager = system.manager    -- For DAG operations
+			local formatter = system.formatter -- For output formatting
 
+			-- Handle the 'create' action - creates a new checklist with tasks
 			if action == "create" then
-				-- Validation
+				-- Validate input parameters for checklist creation
 				local valid, err = validation.validate_create_params(args)
 				if not valid then
 					return cb({ status = "error", data = {}, message = err })
 				end
 
-				local goal = args.goal
-				local tasks_input = args.tasks or {}
-				local subject = args.subject
-				local body = args.body
+				-- Extract parameters for checklist creation
+				local goal = args.goal           -- The main goal/objective
+				local tasks_input = args.tasks or {}  -- Array of tasks to create
+				local subject = args.subject     -- Optional subject line
+				local body = args.body          -- Optional body text
 
-				-- Validate tasks input
+				-- Validate the tasks input structure
 				local tasks_valid, tasks_err = validation.validate_tasks_input(tasks_input)
 				if not tasks_valid then
 					return cb({ status = "error", data = {}, message = tasks_err })
 				end
 
-				-- Parse tasks with dependencies and modes
+				-- Parse and normalize task input data
+				-- Tasks can be specified as strings or tables with detailed configuration
 				local tasks_data = {}
 				for i, task_input in ipairs(tasks_input) do
 					if type(task_input) == "string" then
+						-- Simple string task - use defaults
 						table.insert(tasks_data, {
 							text = task_input,
-							dependencies = {},
-							mode = "readwrite",
+							dependencies = {},    -- No dependencies by default
+							mode = "readwrite",   -- Default mode allows updates
 						})
 					elseif type(task_input) == "table" then
+						-- Table task - extract configuration
 						table.insert(tasks_data, {
 							text = task_input.text or task_input[1] or "",
 							dependencies = task_input.dependencies or {},
