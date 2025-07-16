@@ -23,6 +23,7 @@ Here's what codecompanion-tools.nvim brings to your development workflow:
 
 Automatically detects and manages rule files for your project context in CodeCompanion chat buffers.
 
+- **Pre-Submit Rule Updates**: Updates rule references **before** messages are sent to the LLM for optimal context
 - **Automatic Rule Detection**: Automatically finds and includes relevant rule files (`.rules`, `.cursorrules`, `AGENT.md`, etc.) in your chat context
 - **Smart Context Management**: Only includes rules from directories containing files referenced in your chat
 - **Multiple Rule File Support**: Supports various common rule file formats used by different AI tools
@@ -270,7 +271,7 @@ The rule manager automatically detects and includes rule files in your chat cont
 ```lua
 rules = {
   enabled = true,
-  debug = false, -- Enable debug logging
+  debug = false, -- Enable debug logging to see rule update timing
   rules_filenames = {
     ".rules",
     ".cursorrules",
@@ -288,6 +289,17 @@ rules = {
     return paths
   end,
 }
+```
+
+**Debug Output Example** (when `debug = true`):
+```
+[CodeCompanion-Rules] rule_aware_decorator → triggered
+[CodeCompanion-Rules] on_pre_submit → begin  
+[CodeCompanion-Rules] process → begin
+[CodeCompanion-Rules] collect_paths → 3 path(s)
+[CodeCompanion-Rules] collect_rules → 2 rule file(s)
+[CodeCompanion-Rules] sync_refs → +1 -0
+[CodeCompanion-Rules] process → done
 ```
 
 #### Model Toggle
@@ -370,8 +382,20 @@ Once installed, codecompanion-tools.nvim works automatically in the background. 
 
 #### Rule Manager
 
-The rule manager works automatically in the background. Manual commands are available:
+The rule manager works automatically in the background with intelligent timing:
 
+**Pre-Submit Processing** 🚀
+- Rule references are updated **before** your message is sent to the LLM
+- Ensures the AI has the most current and relevant rule context
+- Provides better, more accurate responses aligned with your project rules
+
+**Automatic Triggers**:
+- **Before message submission**: Uses CodeCompanion's `prompt_decorator` to update rules
+- **After tool execution**: Updates rules when tools create/modify files
+- **On mode changes**: Updates when switching from insert to normal mode
+- **On chat creation**: Initial rule discovery when creating new chats
+
+**Manual commands** are also available:
 - `:CodeCompanionRulesProcess` - Manually re-evaluate rule references
 - `:CodeCompanionRulesDebug` - Toggle debug logging
 - `:CodeCompanionRulesEnable` - Enable the rule manager
@@ -446,6 +470,54 @@ The extension supports common rule file formats used by various AI tools:
 - `AGENT.md`, `AGENTS.md` - Agent instructions
 - `CLAUDE.md` - Claude-specific rules
 - `.codecompanionrules` - CodeCompanion-specific rules
+
+## ⚡ Rule Update Timing
+
+The rule manager uses a sophisticated timing system to ensure optimal performance:
+
+### Pre-Submit Updates (Primary) 🎯
+- **Trigger**: Before message is sent to LLM via `prompt_decorator`
+- **Advantage**: AI receives complete context immediately
+- **Performance**: Minimal delay, cached results
+- **User Experience**: Seamless, no waiting
+
+### Additional Update Triggers 🔄
+- **Chat Creation**: Initial rule discovery
+- **Tool Execution**: After tools create/modify files
+- **Mode Changes**: Insert → Normal mode transitions
+
+### Intelligent Caching 💾
+- **Fingerprint System**: Only processes when file paths change
+- **Per-Buffer Cache**: Each chat maintains its own rule state
+- **Performance**: Avoids redundant processing
+- **Memory**: Automatic cleanup on buffer close
+
+This approach ensures AI always has the most current rule context before processing your messages.
+
+### Rule Update Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant CC as CodeCompanion
+    participant RT as Rule Manager
+    participant LLM as LLM
+
+    Note over U,LLM: 正确的消息发送前更新流程
+    U->>CC: 发送消息
+    CC->>RT: 触发规则更新（通过 prompt_decorator）
+    RT->>CC: 更新规则引用
+    CC->>LLM: 消息（包含最新规则）
+    LLM->>CC: 响应（基于最新规则）
+    CC->>U: 显示响应
+```
+
+**实现优势**:
+- ✅ **即时上下文**: AI在处理消息时已有完整的rule上下文
+- ✅ **准确响应**: 基于最新项目规则生成响应  
+- ✅ **无缝体验**: 用户感知不到延迟
+- ✅ **兼容性**: 与现有`prompt_decorator`完全兼容
+- ✅ **缓存优化**: 智能缓存避免重复处理
 
 ## 🔧 Troubleshooting
 

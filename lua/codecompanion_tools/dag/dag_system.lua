@@ -32,13 +32,13 @@ local dag_system = nil
 ---@return table The complete DAG system instance with all components
 local function create_dag_system()
 	-- Initialize the core components of the DAG system
-	local storage = storage_module.new()      -- Data persistence layer
-	local manager = dag_manager_module.new(storage)  -- Core DAG operations
-	local formatter = dag_formatter_module.new()     -- Output formatting
+	local storage = storage_module.new() -- Data persistence layer
+	local manager = dag_manager_module.new(storage) -- Core DAG operations
+	local formatter = dag_formatter_module.new() -- Output formatting
 
 	return {
-		storage = storage,     -- Access to data storage operations
-		manager = manager,     -- Access to DAG management functions
+		storage = storage, -- Access to data storage operations
+		manager = manager, -- Access to DAG management functions
 		formatter = formatter, -- Access to formatting utilities
 	}
 end

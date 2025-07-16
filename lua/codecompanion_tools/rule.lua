@@ -332,21 +332,6 @@ local function on_mode(bufnr)
 	process(bufnr)
 end
 
-local function on_submit(bufnr)
-	utils.log("on_submit → begin", M.config.debug)
-	if not M.config.enabled then
-		return
-	end
-
-	-- Check buffer type
-	local filetype = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
-	if filetype ~= "codecompanion" then
-		return
-	end
-
-	process(bufnr)
-end
-
 local function on_tool(bufnr)
 	utils.log("on_tool → begin", M.config.debug)
 	if not M.config.enabled then
@@ -364,6 +349,77 @@ end
 
 local function on_clear(bufnr)
 	enabled[bufnr], fingerprint[bufnr] = nil, nil
+end
+
+-- Pre-submit processing function
+local function on_pre_submit(bufnr)
+	utils.log("on_pre_submit → begin", M.config.debug)
+	if not M.config.enabled then
+		return
+	end
+
+	-- Check buffer type
+	local filetype = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
+	if filetype ~= "codecompanion" then
+		return
+	end
+
+	-- Process immediately for pre-submit
+	process(bufnr)
+end
+
+-- Setup prompt decorator to trigger rule updates before message submission
+local function setup_prompt_decorator()
+	local ok, config = pcall(require, "codecompanion.config")
+	if not ok then
+		utils.log("setup_prompt_decorator → codecompanion.config not found", M.config.debug)
+		return
+	end
+
+	-- Store original decorator if it exists
+	local original_decorator = nil
+	if
+		config.strategies
+		and config.strategies.chat
+		and config.strategies.chat.opts
+		and config.strategies.chat.opts.prompt_decorator
+	then
+		original_decorator = config.strategies.chat.opts.prompt_decorator
+	end
+
+	-- Create our decorator function
+	local function rule_aware_decorator(message, adapter, context)
+		utils.log("rule_aware_decorator → triggered", M.config.debug)
+
+		-- Get current buffer from context
+		local bufnr = context.bufnr or vim.api.nvim_get_current_buf()
+
+		-- Update rules before message is sent
+		on_pre_submit(bufnr)
+
+		-- Call original decorator if it exists
+		if original_decorator then
+			return original_decorator(message, adapter, context)
+		end
+
+		return message
+	end
+
+	-- Initialize config structure if needed
+	if not config.strategies then
+		config.strategies = {}
+	end
+	if not config.strategies.chat then
+		config.strategies.chat = {}
+	end
+	if not config.strategies.chat.opts then
+		config.strategies.chat.opts = {}
+	end
+
+	-- Set our decorator
+	config.strategies.chat.opts.prompt_decorator = rule_aware_decorator
+
+	utils.log("setup_prompt_decorator → prompt decorator installed", M.config.debug)
 end
 
 -- Patch buffer slash command for event integration
@@ -400,6 +456,9 @@ function M.setup(opts)
 
 	patch_buffer_slash_command()
 
+	-- Setup prompt decorator for pre-submit rule updates
+	setup_prompt_decorator()
+
 	utils.log(vim.inspect(M.config), M.config.debug)
 
 	local grp = config_utils.create_augroup("CodeCompanionRules")
@@ -422,15 +481,6 @@ function M.setup(opts)
 			if chat_utils.is_chat_buffer(bufnr) then
 				on_mode(bufnr)
 			end
-		end,
-	})
-
-	vim.api.nvim_create_autocmd("User", {
-		group = grp,
-		pattern = "CodeCompanionChatSubmitted",
-		callback = function(args)
-			local bufnr = args.buf or vim.api.nvim_get_current_buf()
-			on_submit(bufnr)
 		end,
 	})
 

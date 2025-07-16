@@ -18,35 +18,35 @@ local M = {}
 -- These are the baseline settings that will be used if no user configuration is provided
 -- All values can be overridden through the setup() function
 M.defaults = {
-	enabled = true,        -- Enable/disable the entire compression system
-	auto_trigger = true,   -- Automatically trigger compression based on thresholds
-	debug = false,         -- Enable debug output and logging
+	enabled = true, -- Enable/disable the entire compression system
+	auto_trigger = true, -- Automatically trigger compression based on thresholds
+	debug = false, -- Enable debug output and logging
 
 	-- Trigger thresholds for automatic compression
 	-- These values determine when compression should be triggered
-	token_threshold = 8000,              -- Compress when token count exceeds this
-	memory_threshold = 500,              -- Compress when memory usage exceeds this (MB)
-	message_count_threshold = 20,        -- Compress when message count exceeds this
+	token_threshold = 8000, -- Compress when token count exceeds this
+	memory_threshold = 500, -- Compress when memory usage exceeds this (MB)
+	message_count_threshold = 20, -- Compress when message count exceeds this
 
 	-- Strategy configuration
 	-- Primary strategy is tried first, fallback is used if primary fails
-	primary_strategy = "simple_truncation",   -- Primary compression strategy
-	fallback_strategy = "simple_truncation",  -- Fallback strategy if primary fails
+	primary_strategy = "simple_truncation", -- Primary compression strategy
+	fallback_strategy = "simple_truncation", -- Fallback strategy if primary fails
 
 	-- Strategy-specific settings
 	-- Simple truncation: Just keep the most recent messages
 	simple_truncation = {
-		keep_recent_messages = 5,      -- Number of recent messages to preserve
-		keep_system_messages = true,   -- Always preserve system messages
+		keep_recent_messages = 5, -- Number of recent messages to preserve
+		keep_system_messages = true, -- Always preserve system messages
 		preserve_context_markers = true, -- Keep context markers for continuity
 	},
 
 	-- Structured summary: Use AI to create intelligent summaries
 	structured_summary = {
-		enabled = false,               -- Disabled in MVP (requires AI model)
-		model = "gpt-4o-mini",         -- AI model to use for summarization
-		max_tokens = 1000,            -- Maximum tokens for summary generation
-		temperature = 0.1,            -- Low temperature for consistent results
+		enabled = false, -- Disabled in MVP (requires AI model)
+		model = "gpt-4o-mini", -- AI model to use for summarization
+		max_tokens = 1000, -- Maximum tokens for summary generation
+		temperature = 0.1, -- Low temperature for consistent results
 		template = [[
 请将以下对话内容进行结构化总结，保持关键信息和上下文连贯性：
 
@@ -62,30 +62,30 @@ M.defaults = {
 
 	-- Priority truncation: Keep messages based on calculated importance scores
 	priority_truncation = {
-		enabled = false,               -- Disabled in MVP (complex algorithm)
+		enabled = false, -- Disabled in MVP (complex algorithm)
 		importance_weights = {
-			time_decay = 0.3,          -- Weight for recency of messages
-			semantic_relevance = 0.4,  -- Weight for semantic relevance
-			user_interaction = 0.2,    -- Weight for user interaction intensity
-			content_type = 0.1,        -- Weight for content type (code, text, etc.)
+			time_decay = 0.3, -- Weight for recency of messages
+			semantic_relevance = 0.4, -- Weight for semantic relevance
+			user_interaction = 0.2, -- Weight for user interaction intensity
+			content_type = 0.1, -- Weight for content type (code, text, etc.)
 		},
-		min_importance_score = 0.3,    -- Minimum score to keep a message
+		min_importance_score = 0.3, -- Minimum score to keep a message
 	},
 
 	-- Quality assessment settings
 	-- These settings control how compression quality is evaluated
 	quality_assessment = {
-		enabled = true,                    -- Enable quality assessment
-		min_content_retention = 0.5,      -- Minimum content retention ratio
-		check_context_continuity = true,  -- Check for context flow preservation
-		validate_key_information = true,  -- Validate key information retention
+		enabled = true, -- Enable quality assessment
+		min_content_retention = 0.5, -- Minimum content retention ratio
+		check_context_continuity = true, -- Check for context flow preservation
+		validate_key_information = true, -- Validate key information retention
 	},
 
 	-- User interface settings
 	-- Control how compression events are communicated to the user
 	ui = {
-		auto_notify = true,              -- Show notifications when compression occurs
-		show_compression_stats = true,   -- Display compression statistics
+		auto_notify = true, -- Show notifications when compression occurs
+		show_compression_stats = true, -- Display compression statistics
 	},
 }
 
@@ -121,7 +121,7 @@ function M.get(key)
 		if type(value) == "table" and value[k] ~= nil then
 			value = value[k]
 		else
-			return nil  -- Key not found
+			return nil -- Key not found
 		end
 	end
 

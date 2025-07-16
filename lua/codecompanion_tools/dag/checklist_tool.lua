@@ -33,10 +33,10 @@ local ChecklistTool = {
 		function(agent, args, input, cb)
 			-- Extract the action to perform from arguments
 			local action = args.action
-			
+
 			-- Get the shared DAG system instance and its components
 			local system = dag_system.get_instance()
-			local manager = system.manager    -- For DAG operations
+			local manager = system.manager -- For DAG operations
 			local formatter = system.formatter -- For output formatting
 
 			-- Handle the 'create' action - creates a new checklist with tasks
@@ -48,10 +48,10 @@ local ChecklistTool = {
 				end
 
 				-- Extract parameters for checklist creation
-				local goal = args.goal           -- The main goal/objective
-				local tasks_input = args.tasks or {}  -- Array of tasks to create
-				local subject = args.subject     -- Optional subject line
-				local body = args.body          -- Optional body text
+				local goal = args.goal -- The main goal/objective
+				local tasks_input = args.tasks or {} -- Array of tasks to create
+				local subject = args.subject -- Optional subject line
+				local body = args.body -- Optional body text
 
 				-- Validate the tasks input structure
 				local tasks_valid, tasks_err = validation.validate_tasks_input(tasks_input)
@@ -67,8 +67,8 @@ local ChecklistTool = {
 						-- Simple string task - use defaults
 						table.insert(tasks_data, {
 							text = task_input,
-							dependencies = {},    -- No dependencies by default
-							mode = "readwrite",   -- Default mode allows updates
+							dependencies = {}, -- No dependencies by default
+							mode = "readwrite", -- Default mode allows updates
 						})
 					elseif type(task_input) == "table" then
 						-- Table task - extract configuration
