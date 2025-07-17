@@ -1,0 +1,254 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "name": "CodeCompanion Tools",
+  "version": "1.0.0",
+  "system_prompt": "This is an advanced tool extension collection developed for CodeCompanion.nvim, featuring intelligent rule management, model switching, task management, and context compression. The code is written in Lua following Neovim plugin development standards.",
+  "vars": {
+    "project_root": "lua/codecompanion_tools",
+    "extension_root": "lua/codecompanion/_extensions/codecompanion-tools"
+  },
+  "groups": [
+    {
+      "name": "Core Extension System",
+      "system_prompt": "Handles the core architecture, configuration management, and tool registration for CodeCompanion extensions. Responsible for extension initialization, backward compatibility, and global configuration.",
+      "data": [
+        "extension_main",
+        "backward_compat",
+        "core_config",
+        "tool_registry",
+        "utilities"
+      ]
+    },
+    {
+      "name": "Rule Manager",
+      "system_prompt": "Automatically detects and manages project-specific AI rule files, intelligently includes relevant rules in chat context, supports multiple rule file formats. Handles rule discovery, caching, and dynamic updates.",
+      "data": [
+        "rule_manager",
+        "rule_examples"
+      ]
+    },
+    {
+      "name": "Model Toggle",
+      "system_prompt": "Provides functionality for quickly switching LLM models in CodeCompanion chat buffers, supports sequential mode and adapter mode switching, with each buffer independently remembering the original model.",
+      "data": [
+        "model_toggle",
+        "chat_utilities"
+      ]
+    },
+    {
+      "name": "DAG Task Management System",
+      "system_prompt": "Creates and manages complex task lists with dependencies, supports parallel execution, status tracking, access pattern control, and persistent storage. Provides a unified checklist tool.",
+      "data": [
+        "dag_adapter",
+        "dag_manager",
+        "dag_executor", 
+        "dag_formatter",
+        "dag_storage",
+        "dag_validation",
+        "dag_types",
+        "dag_system",
+        "checklist_tool"
+      ]
+    },
+    {
+      "name": "Context Compression System",
+      "system_prompt": "Intelligently compresses chat context to optimize performance and manage memory usage, supports multiple compression strategies, automatic triggers, and quality preservation. Monitors token count, memory usage, and message count.",
+      "data": [
+        "compression_adapter",
+        "compression_manager", 
+        "compression_config",
+        "trigger_detector",
+        "importance_scorer",
+        "quality_assessor",
+        "strategy_selector",
+        "compression_strategies"
+      ]
+    },
+    {
+      "name": "Adapter Infrastructure",
+      "system_prompt": "Provides unified adapter interfaces and base classes for different tool components. Handles tool registration, configuration management, and lifecycle management.",
+      "data": [
+        "base_adapter",
+        "adapter_types"
+      ]
+    },
+    {
+      "name": "Documentation and Examples",
+      "system_prompt": "Project documentation, usage examples, configuration instructions, and architecture descriptions. Includes installation guides, troubleshooting, and contribution guidelines.",
+      "data": [
+        "readme_doc",
+        "usage_examples",
+        "architecture_doc",
+        "simplified_doc",
+        "tool_doc"
+      ]
+    }
+  ],
+  "data": {
+    "extension_main": {
+      "type": "file",
+      "path": "${extension_root}/init.lua",
+      "description": "Main entry point for CodeCompanion extensions, handles initialization and configuration of all components"
+    },
+    "backward_compat": {
+      "type": "file", 
+      "path": "${project_root}/init.lua",
+      "description": "Backward compatibility module, ensures old configuration methods continue to work"
+    },
+    "core_config": {
+      "type": "file",
+      "path": "${project_root}/config.lua", 
+      "description": "Core configuration tools and default settings"
+    },
+    "tool_registry": {
+      "type": "file",
+      "path": "${project_root}/tool_registry.lua",
+      "description": "Tool registration system, manages tool lifecycle"
+    },
+    "utilities": {
+      "type": "file",
+      "path": "${project_root}/utils.lua",
+      "description": "Common utility functions and helper methods"
+    },
+    "rule_manager": {
+      "type": "file",
+      "path": "${project_root}/rule.lua",
+      "description": "Main rule manager module, handles rule file discovery, caching, and updates"
+    },
+    "model_toggle": {
+      "type": "file", 
+      "path": "${project_root}/model_toggle.lua",
+      "description": "Model switching functionality, supports quick switching between different LLM models"
+    },
+    "chat_utilities": {
+      "type": "file",
+      "path": "${project_root}/chat.lua", 
+      "description": "Chat-related utility functions and buffer operations"
+    },
+    "dag_adapter": {
+      "type": "file",
+      "path": "${project_root}/adapters/dag_adapter.lua",
+      "description": "DAG system adapter, integrates DAG functionality into CodeCompanion"
+    },
+    "dag_manager": {
+      "type": "file",
+      "path": "${project_root}/dag/dag_manager.lua", 
+      "description": "DAG business logic manager, handles task creation, dependency resolution, and state management"
+    },
+    "dag_executor": {
+      "type": "file",
+      "path": "${project_root}/dag/dag_executor.lua",
+      "description": "Parallel execution engine, safely executes independent read-only tasks in parallel"
+    },
+    "dag_formatter": {
+      "type": "file",
+      "path": "${project_root}/dag/dag_formatter.lua",
+      "description": "DAG output formatter, generates user-friendly display formats"
+    },
+    "dag_storage": {
+      "type": "file", 
+      "path": "${project_root}/dag/storage.lua",
+      "description": "Persistent storage system, saves and restores checklist state"
+    },
+    "dag_validation": {
+      "type": "file",
+      "path": "${project_root}/dag/validation.lua",
+      "description": "Input validation tools, ensures DAG data integrity"
+    },
+    "dag_types": {
+      "type": "file",
+      "path": "${project_root}/dag/dag_types.lua",
+      "description": "DAG type definitions and data structures"
+    },
+    "dag_system": {
+      "type": "file",
+      "path": "${project_root}/dag/dag_system.lua", 
+      "description": "Shared DAG system singleton, provides global state management"
+    },
+    "checklist_tool": {
+      "type": "file",
+      "path": "${project_root}/dag/checklist_tool.lua",
+      "description": "Unified checklist tool, provides users with a simple task management interface"
+    },
+    "compression_adapter": {
+      "type": "file",
+      "path": "${project_root}/adapters/compression_adapter.lua",
+      "description": "Adapter for the context compression system"
+    },
+    "compression_manager": {
+      "type": "file",
+      "path": "${project_root}/context_compression/compression_manager.lua",
+      "description": "Core compression logic manager"
+    },
+    "compression_config": {
+      "type": "file",
+      "path": "${project_root}/context_compression/config.lua",
+      "description": "Compression system configuration"
+    },
+    "trigger_detector": {
+      "type": "file",
+      "path": "${project_root}/context_compression/trigger_detector.lua",
+      "description": "Threshold monitoring, detects when compression is needed"
+    },
+    "importance_scorer": {
+      "type": "file",
+      "path": "${project_root}/context_compression/importance_scorer.lua", 
+      "description": "Message importance scorer"
+    },
+    "quality_assessor": {
+      "type": "file",
+      "path": "${project_root}/context_compression/quality_assessor.lua",
+      "description": "Compression quality assessor"
+    },
+    "strategy_selector": {
+      "type": "file",
+      "path": "${project_root}/context_compression/strategy_selector.lua",
+      "description": "Strategy selection logic"
+    },
+    "compression_strategies": {
+      "type": "symbols",
+      "path": "${project_root}/context_compression/strategies",
+      "description": "Compression strategy implementation directory, contains multiple compression algorithms"
+    },
+    "base_adapter": {
+      "type": "file",
+      "path": "${project_root}/adapters/base_adapter.lua",
+      "description": "Base adapter class, defines adapter interface and common functionality"
+    },
+    "adapter_types": {
+      "type": "file", 
+      "path": "${project_root}/dag/shared_types.lua",
+      "description": "Shared type definitions for adapter system"
+    },
+    "readme_doc": {
+      "type": "file",
+      "path": "README.md",
+      "description": "Main project documentation, includes feature introduction, installation guide, and configuration instructions"
+    },
+    "usage_examples": {
+      "type": "file",
+      "path": "examples/usage.lua",
+      "description": "Usage examples and code demonstrations"
+    },
+    "architecture_doc": {
+      "type": "file",
+      "path": "abstract-context-compression-architecture.md",
+      "description": "Abstract design document for context compression architecture"
+    },
+    "simplified_doc": {
+      "type": "file",
+      "path": "SIMPLIFIED.md", 
+      "description": "Simplified documentation, quick start guide"
+    },
+    "tool_doc": {
+      "type": "file",
+      "path": "doc/codecompanion-tools.txt",
+      "description": "Tool documentation in Neovim help format"
+    },
+    "rule_examples": {
+      "type": "file",
+      "path": "codecompanion.txt",
+      "description": "Rule file examples and configuration reference"
+    }
+  }
+}
