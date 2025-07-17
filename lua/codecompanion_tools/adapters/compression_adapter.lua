@@ -1,7 +1,8 @@
-local BaseAdapter = require("codecompanion_tools.adapters.base_adapter")
+local base_adapter = require("codecompanion_tools.adapters.base_adapter")
 local compression_manager = require("codecompanion_tools.context_compression.compression_manager")
+local config_utils = require("codecompanion_tools.config")
 
-local CompressionAdapter = BaseAdapter:new("compression", {
+local adapter = base_adapter.new("compression", {
 	enabled = true,
 	auto_compress = true,
 	threshold = 8000,
@@ -10,9 +11,7 @@ local CompressionAdapter = BaseAdapter:new("compression", {
 	debug = false,
 })
 
-function CompressionAdapter:initialize()
-	BaseAdapter.initialize(self)
-
+function adapter:init()
 	-- 初始化压缩管理器
 	compression_manager.init(self.config)
 
@@ -32,7 +31,7 @@ function CompressionAdapter:initialize()
 	end
 end
 
-function CompressionAdapter:create_compress_tool()
+function adapter:create_compress_tool()
 	return {
 		name = "compress_context",
 		description = "Compress chat context to reduce token usage",
@@ -83,7 +82,7 @@ function CompressionAdapter:create_compress_tool()
 	}
 end
 
-function CompressionAdapter:create_stats_tool()
+function adapter:create_stats_tool()
 	return {
 		name = "compression_stats",
 		description = "Get compression statistics for current chat",
@@ -106,7 +105,7 @@ function CompressionAdapter:create_stats_tool()
 	}
 end
 
-function CompressionAdapter:create_recommend_tool()
+function adapter:create_recommend_tool()
 	return {
 		name = "compression_recommend",
 		description = "Check if compression is recommended for current chat",
@@ -134,9 +133,7 @@ function CompressionAdapter:create_recommend_tool()
 	}
 end
 
-function CompressionAdapter:setup_commands()
-	local config_utils = require("codecompanion_tools.config")
-
+function adapter:setup_commands()
 	config_utils.setup_commands("CodeCompanionCompress", {
 		Now = {
 			callback = function()
@@ -163,8 +160,7 @@ function CompressionAdapter:setup_commands()
 	})
 end
 
-function CompressionAdapter:setup_auto_compression()
-	local config_utils = require("codecompanion_tools.config")
+function adapter:setup_auto_compression()
 	local group = config_utils.create_augroup("CompressionAdapter")
 
 	vim.api.nvim_create_autocmd("User", {
@@ -188,4 +184,4 @@ function CompressionAdapter:setup_auto_compression()
 	})
 end
 
-return CompressionAdapter
+return adapter

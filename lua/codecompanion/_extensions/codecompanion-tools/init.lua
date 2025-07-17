@@ -55,49 +55,35 @@ function M.setup(opts)
 		require("codecompanion_tools.model_toggle").setup(model_opts)
 	end
 
-	-- Setup DAG adapter
-	if opts.dag ~= false then
-		if debug then
-			print("[CodeCompanion-Tools] Setting up DAG adapter...")
-		end
-		local dag_adapter = require("codecompanion_tools.adapters.dag_adapter")
-		adapters.dag = dag_adapter
-		local dag_opts = vim.tbl_deep_extend("force", opts.dag or {}, { debug = debug })
-		dag_adapter:setup(dag_opts)
-	else
-		if debug then
-			print("[CodeCompanion-Tools] DAG adapter is disabled")
-		end
-	end
+	-- Setup adapters
+	local adapter_configs = {
+		dag = { module = "codecompanion_tools.adapters.dag_adapter", default_enabled = true },
+		compression = { module = "codecompanion_tools.adapters.compression_adapter", default_enabled = true },
+	}
 
-	-- Setup context compression adapter
-	if opts.compression ~= false then
-		if debug then
-			print("[CodeCompanion-Tools] Setting up context compression adapter...")
-		end
-		local compression_adapter = require("codecompanion_tools.adapters.compression_adapter")
-		adapters.compression = compression_adapter
-		local compression_opts = vim.tbl_deep_extend("force", opts.compression or {}, { debug = debug })
-		compression_adapter:setup(compression_opts)
-	else
-		if debug then
-			print("[CodeCompanion-Tools] Context compression adapter is disabled")
-		end
-	end
-
-	-- 注册所有适配器的工具到 CodeCompanion
 	local all_tools = {}
-	for name, adapter in pairs(adapters) do
-		local tools = adapter:get_tools()
-		for tool_name, tool_config in pairs(tools) do
-			all_tools[tool_name] = tool_config
-		end
-		if debug then
-			print("[CodeCompanion-Tools] Registered tools from adapter:", name, vim.inspect(vim.tbl_keys(tools)))
+	for name, config in pairs(adapter_configs) do
+		if opts[name] ~= false then
+			if debug then
+				print("[CodeCompanion-Tools] Setting up", name, "adapter...")
+			end
+			local adapter = require(config.module)
+			adapters[name] = adapter
+			local adapter_opts = vim.tbl_deep_extend("force", opts[name] or {}, { debug = debug })
+			adapter:setup(adapter_opts)
+
+			-- Collect tools
+			local tools = adapter:get_tools()
+			for tool_name, tool_config in pairs(tools) do
+				all_tools[tool_name] = tool_config
+			end
+			if debug and next(tools) then
+				print("[CodeCompanion-Tools] Registered tools from", name, "adapter:", vim.inspect(vim.tbl_keys(tools)))
+			end
 		end
 	end
 
-	-- Register tools with CodeCompanion
+	-- Register all tools
 	if next(all_tools) then
 		local tool_registry = require("codecompanion_tools.tool_registry")
 		local success = tool_registry.register_tools(all_tools, debug)
