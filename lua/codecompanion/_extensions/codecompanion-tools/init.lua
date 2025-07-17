@@ -101,38 +101,6 @@ function M.setup(opts)
 		end
 	end
 
-	-- Create debug command for troubleshooting
-	-- This command provides detailed information about the extension state
-	vim.api.nvim_create_user_command("CodeCompanionToolsDebug", function()
-		print("=== CodeCompanion Tools Debug ===")
-		print("Extension loaded:", M ~= nil)
-		print("Global debug mode:", M.debug or false)
-		print("DAG tools:", M.dag_tools and vim.inspect(vim.tbl_keys(M.dag_tools)) or "nil")
-		print("Compression tools:", "removed (core functionality available via commands)")
-
-		local ok, codecompanion = pcall(require, "codecompanion")
-		if ok and codecompanion.config then
-			print("CodeCompanion config exists:", codecompanion.config ~= nil)
-			print("Strategies config:", codecompanion.config.strategies ~= nil)
-			print("Chat config:", codecompanion.config.strategies and codecompanion.config.strategies.chat ~= nil)
-			print(
-				"Tools config:",
-				codecompanion.config.strategies
-					and codecompanion.config.strategies.chat
-					and codecompanion.config.strategies.chat.tools ~= nil
-			)
-
-			if
-				codecompanion.config.strategies
-				and codecompanion.config.strategies.chat
-				and codecompanion.config.strategies.chat.tools
-			then
-				print("Registered tools:", vim.inspect(vim.tbl_keys(codecompanion.config.strategies.chat.tools)))
-			end
-		else
-			print("Failed to load CodeCompanion")
-		end
-	end, {})
 end
 
 --- Export functions for external use
