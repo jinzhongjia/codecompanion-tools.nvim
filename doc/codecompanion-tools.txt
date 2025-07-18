@@ -3,6 +3,8 @@
 CODECOMPANION-TOOLS                                     *codecompanion-tools*
 
 A comprehensive collection of advanced tools and extensions for CodeCompanion.nvim
+designed to enhance your AI-powered coding workflow with intelligent automation
+and productivity features through a modern adapter architecture.
 
 Author: CodeCompanion Tools Contributors
 License: MIT License
@@ -13,32 +15,35 @@ CONTENTS                                        *codecompanion-tools-contents*
 1. Introduction ........................ |codecompanion-tools-introduction|
 2. Installation ........................ |codecompanion-tools-installation|
 3. Configuration ....................... |codecompanion-tools-configuration|
-4. Rule Manager ........................ |codecompanion-tools-rule-manager|
-5. Model Toggle ........................ |codecompanion-tools-model-toggle|
-6. DAG Checklist System ................ |codecompanion-tools-dag-system|
-7. Context Compression ................. |codecompanion-tools-context-compression|
-8. Commands ............................ |codecompanion-tools-commands|
-9. API ................................. |codecompanion-tools-api|
-10. Troubleshooting .................... |codecompanion-tools-troubleshooting|
-11. Changelog .......................... |codecompanion-tools-changelog|
+4. Architecture ........................ |codecompanion-tools-architecture|
+5. Rule Manager ........................ |codecompanion-tools-rule-manager|
+6. Model Toggle ........................ |codecompanion-tools-model-toggle|
+7. DAG Checklist System ................ |codecompanion-tools-dag-system|
+8. Context Compression ................. |codecompanion-tools-context-compression|
+9. Commands ............................ |codecompanion-tools-commands|
+10. API ................................ |codecompanion-tools-api|
+11. Troubleshooting .................... |codecompanion-tools-troubleshooting|
+12. Changelog .......................... |codecompanion-tools-changelog|
 
 ==============================================================================
 INTRODUCTION                                *codecompanion-tools-introduction*
 
 codecompanion-tools.nvim is a comprehensive collection of advanced tools and
 extensions for CodeCompanion.nvim, designed to enhance your AI-powered coding
-workflow with intelligent automation and productivity features.
+workflow with intelligent automation and productivity features through a modern
+adapter architecture.
 
 This extension provides a suite of sophisticated tools that seamlessly 
-integrate with CodeCompanion to provide:
+integrate with CodeCompanion through a clean modular adapter system:
 
-- Intelligent Rule Management: Automatically discover and apply project-specific AI rules
-- Flexible Model Switching: Quick and easy switching between different LLM models
-- Advanced Task Management: Complex workflow orchestration with dependency resolution
-- Smart Context Compression: Intelligent chat context optimization for better performance
+- Intelligent Rule Management: Automatically discover and apply project-specific AI rules with pre-submit updates
+- Flexible Model Switching: Quick and easy switching between different LLM models with per-buffer memory
+- Advanced DAG Task Management: Complex workflow orchestration with dependency resolution and parallel execution
+- Smart Context Compression: Intelligent chat context optimization with automatic triggers and quality preservation
 
 All tools are designed to work automatically in the background while providing
-manual control when needed.
+manual control when needed, utilizing a unified configuration system and
+centralized tool registration for optimal performance and maintainability.
 
 ==============================================================================
 INSTALLATION                                *codecompanion-tools-installation*
@@ -80,7 +85,9 @@ Using packer.nvim: >
 ==============================================================================
 CONFIGURATION                              *codecompanion-tools-configuration*
 
-The plugin is configured through CodeCompanion's extension system.
+The plugin is configured through CodeCompanion's extension system with a modern
+adapter architecture that provides unified configuration management and automatic
+tool registration.
 
 Default configuration: >
     {
@@ -149,17 +156,49 @@ Default configuration: >
 <
 
 ==============================================================================
+ARCHITECTURE                                *codecompanion-tools-architecture*
+
+The plugin follows a modern adapter architecture for optimal performance and
+maintainability:
+
+Core Architecture:
+- Extension entry point: lua/codecompanion/_extensions/codecompanion-tools/init.lua
+- Adapter system: lua/codecompanion_tools/adapters/
+- Tool registry: Centralized tool registration with CodeCompanion
+- Configuration system: Unified configuration management
+
+Modular Adapter System:
+- base_adapter.lua: Common interface for all adapters
+- compression_adapter.lua: Context compression functionality
+- dag_adapter.lua: DAG checklist system integration
+
+Key Components:
+- Rule Manager: Intelligent rule file discovery and management
+- Model Toggle: Per-buffer model switching with memory
+- DAG System: Complex task management with dependency resolution
+- Context Compression: Automatic chat optimization
+
+The adapter architecture provides:
+- Clean separation of concerns
+- Unified setup and initialization
+- Consistent debug logging
+- Graceful degradation and error handling
+- Automatic tool registration with CodeCompanion
+
+==============================================================================
 RULE MANAGER                                *codecompanion-tools-rule-manager*
 
 The rule manager automatically detects and manages rule files for your
-project context in CodeCompanion chat buffers.
+project context in CodeCompanion chat buffers with sophisticated timing
+and caching mechanisms.
 
 Features:
-- Automatic rule detection from various AI tools
-- Smart context management
-- Multiple rule file format support
-- Cache management for efficiency
-- Intelligent path extraction
+- Pre-submit rule updates using CodeCompanion's prompt_decorator system
+- Automatic rule detection from 10+ AI tools and formats
+- Smart context management with fingerprint-based caching
+- Multiple rule file format support with customizable filenames
+- Intelligent path extraction from chat references and tool outputs
+- Sophisticated event handling for various chat states
 
 ------------------------------------------------------------------------------
 RULE MANAGER OPTIONS                    *codecompanion-tools-rule-manager-opts*
@@ -205,9 +244,9 @@ RULE MANAGER BEHAVIOR                  *codecompanion-tools-rule-manager-behavio
 
 The rule manager operates automatically based on these triggers:
 
-1. Chat buffer creation
-2. Mode change from insert to normal
-3. After message submission
+1. Pre-submit updates via prompt_decorator (primary)
+2. Chat buffer creation
+3. Mode change from insert to normal
 4. After tool execution
 5. Manual trigger via |:CodeCompanionRulesProcess|
 
@@ -215,16 +254,19 @@ Path Collection:
 - Chat references (from /file, /buffer commands)
 - Tool output patterns in messages
 - Custom extraction function results
+- Sophisticated pattern matching for various file references
 
 Rule File Search:
 - Searches parent directories upward from each referenced file
 - Looks for rule files in order of preference
 - Prioritizes deeper directories (more specific rules)
+- Fingerprint-based caching to avoid redundant processing
 
 Reference Management:
 - Adds rule files as pinned references
 - Removes obsolete references automatically
-- Updates context as needed
+- Updates context as needed with intelligent timing
+- Per-buffer caching for optimal performance
 
 ==============================================================================
 MODEL TOGGLE                                *codecompanion-tools-model-toggle*
@@ -300,15 +342,17 @@ Models Mode:
 DAG CHECKLIST SYSTEM                          *codecompanion-tools-dag-system*
 
 The DAG (Directed Acyclic Graph) checklist system provides structured task
-management with dependency resolution and parallel execution capabilities.
+management with dependency resolution and parallel execution capabilities
+through a unified checklist tool interface.
 
 Features:
-- Dependency management with cycle detection
-- Parallel execution of independent tasks
-- Task status tracking
-- Access mode control for safe execution
-- Persistent storage across sessions
-- Progress monitoring
+- Dependency management with cycle detection and validation
+- Parallel execution of independent read-only tasks for efficiency
+- Task status tracking with rich progress indicators
+- Access mode control for safe parallel execution (read/write/readwrite)
+- Persistent JSON storage in vim data directory across sessions
+- Progress monitoring with completion statistics and visual formatting
+- Action-based interface (create, list, status, complete) for intuitive management
 
 ------------------------------------------------------------------------------
 DAG SYSTEM OPTIONS                         *codecompanion-tools-dag-system-opts*
@@ -344,9 +388,9 @@ Access Mode Control:
 - readwrite: Sequential execution required (read and modify operations)
 
 Persistent Storage:
-- Automatically saves checklists to ~/.local/share/nvim/codecompanion-tools/
-- Restores checklists across Neovim sessions
-- Maintains task history and progress logs
+- Automatically saves checklists to vim data directory in JSON format
+- Restores checklists across Neovim sessions with full state preservation
+- Maintains task history and progress logs with rich metadata
 
 ------------------------------------------------------------------------------
 DAG TOOL                                        *codecompanion-tools-dag-tool*
@@ -419,14 +463,15 @@ checklist                                       *codecompanion-tools-checklist*
 CONTEXT COMPRESSION                    *codecompanion-tools-context-compression*
 
 The context compression system intelligently manages chat context to optimize
-performance and memory usage.
+performance and memory usage with sophisticated quality assessment and
+strategy selection.
 
 Features:
-- Smart automatic compression
-- Multiple compression strategies
-- Configurable trigger thresholds
-- Quality preservation
-- Automatic operation
+- Smart automatic compression with comprehensive trigger detection
+- Multiple compression strategies with fallback support
+- Configurable trigger thresholds for token count, memory usage, and message count
+- Quality preservation with importance scoring and assessment
+- Automatic operation with graceful degradation and strategy chaining
 
 ------------------------------------------------------------------------------
 CONTEXT COMPRESSION OPTIONS        *codecompanion-tools-context-compression-opts*
@@ -485,17 +530,17 @@ COMPRESSION STRATEGIES              *codecompanion-tools-compression-strategies*
 Simple Truncation:
 - Keeps recent messages and system messages
 - Preserves important context markers
-- Fast and reliable compression
+- Fast and reliable compression with quality assessment
 
 Structured Summarization:
 - Uses LLM to create intelligent summaries
 - Maintains context continuity
-- Higher quality but slower (future feature)
+- Higher quality but slower with fallback support
 
 Priority-based Truncation:
-- Evaluates message importance
-- Preserves key information
-- Balanced approach (future feature)
+- Evaluates message importance scoring
+- Preserves key information based on importance
+- Balanced approach with quality preservation
 
 ==============================================================================
 COMMANDS                                        *codecompanion-tools-commands*
@@ -514,6 +559,18 @@ COMMANDS                                        *codecompanion-tools-commands*
 
 :CodeCompanionToolsDebug                           *:CodeCompanionToolsDebug*
     Show extension status and registered tools for debugging.
+
+:CodeCompanionDAGDebug                               *:CodeCompanionDAGDebug*
+    Debug DAG system state and operations.
+
+:CodeCompanionDAGReset                               *:CodeCompanionDAGReset*
+    Reset DAG system state and clear all checklists.
+
+:CodeCompanionCompressNow                         *:CodeCompanionCompressNow*
+    Manually trigger context compression for the current buffer.
+
+:CodeCompanionCompressStats                     *:CodeCompanionCompressStats*
+    Show context compression statistics and system status.
 
 ==============================================================================
 API                                                  *codecompanion-tools-api*
@@ -542,7 +599,9 @@ The original setup method is still supported: >
     })
 <
 
-This will automatically delegate to the proper extension system.
+This will automatically delegate to the proper extension system through the
+adapter architecture, ensuring existing configurations work without modification
+while benefiting from the new modular design.
 
 ==============================================================================
 TROUBLESHOOTING                            *codecompanion-tools-troubleshooting*
@@ -579,6 +638,15 @@ Context Compression Not Working~
 
 ==============================================================================
 CHANGELOG                                      *codecompanion-tools-changelog*
+
+v2.1.0
+    - Major architectural refactoring with modular adapter system
+    - Enhanced rule manager with pre-submit updates via prompt_decorator
+    - Improved DAG system with unified checklist tool interface
+    - Context compression with sophisticated quality assessment
+    - Centralized tool registration and configuration management
+    - Better error handling and graceful degradation
+    - Enhanced debug commands and troubleshooting capabilities
 
 v2.0.0
     - Added context compression system with automatic triggers

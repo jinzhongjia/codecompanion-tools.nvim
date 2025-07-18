@@ -4,14 +4,14 @@ A comprehensive collection of advanced tools and extensions for [CodeCompanion.n
 
 ## 🌟 Overview
 
-This extension provides a suite of sophisticated tools that seamlessly integrate with CodeCompanion to provide:
+This extension provides a suite of sophisticated tools that seamlessly integrate with CodeCompanion through a modern adapter architecture:
 
-- **Intelligent Rule Management**: Automatically discover and apply project-specific AI rules
-- **Flexible Model Switching**: Quick and easy switching between different LLM models
-- **Advanced Task Management**: Complex workflow orchestration with dependency resolution
-- **Smart Context Compression**: Intelligent chat context optimization for better performance
+- **Intelligent Rule Management**: Automatically discover and apply project-specific AI rules with pre-submit updates
+- **Flexible Model Switching**: Quick and easy switching between different LLM models with per-buffer memory
+- **Advanced DAG Task Management**: Complex workflow orchestration with dependency resolution and parallel execution
+- **Smart Context Compression**: Intelligent chat context optimization with automatic triggers and quality preservation
 
-All tools are designed to work automatically in the background while providing manual control when needed.
+All tools are designed to work automatically in the background while providing manual control when needed, utilizing a clean modular adapter system for optimal performance and maintainability.
 
 ## 🚀 Features
 
@@ -21,14 +21,14 @@ Here's what codecompanion-tools.nvim brings to your development workflow:
 
 ### Rule Manager
 
-Automatically detects and manages rule files for your project context in CodeCompanion chat buffers.
+Automatically detects and manages rule files for your project context in CodeCompanion chat buffers with sophisticated timing and caching.
 
-- **Pre-Submit Rule Updates**: Updates rule references **before** messages are sent to the LLM for optimal context
+- **Pre-Submit Rule Updates**: Updates rule references **before** messages are sent to the LLM using CodeCompanion's `prompt_decorator` system
 - **Automatic Rule Detection**: Automatically finds and includes relevant rule files (`.rules`, `.cursorrules`, `AGENT.md`, etc.) in your chat context
 - **Smart Context Management**: Only includes rules from directories containing files referenced in your chat
-- **Multiple Rule File Support**: Supports various common rule file formats used by different AI tools
-- **Cache Management**: Efficiently caches and updates rule references to minimize token usage
-- **Intelligent Path Extraction**: Extracts file paths from chat references, slash commands, and tool outputs
+- **Multiple Rule File Support**: Supports 10+ common rule file formats used by different AI tools
+- **Intelligent Caching**: Fingerprint-based caching system to avoid redundant processing
+- **Sophisticated Path Extraction**: Extracts file paths from chat references, slash commands, and tool outputs with customizable extraction functions
 
 ### Model Toggle
 
@@ -43,25 +43,26 @@ Quickly switch between LLM models in any CodeCompanion chat buffer.
 
 ### DAG Checklist System
 
-Create and manage complex task checklists with dependency management and parallel execution.
+Create and manage complex task checklists with dependency management and parallel execution through a unified `checklist` tool.
 
-- **Dependency Management**: Define task dependencies to ensure proper execution order
+- **Dependency Management**: Define task dependencies with cycle detection to ensure proper execution order
 - **Parallel Execution**: Automatically execute independent read-only tasks in parallel for efficiency
 - **Task Status Tracking**: Track task progress with states (pending, in_progress, completed, blocked)
 - **Access Mode Control**: Specify task access modes (read, write, readwrite) for safe parallel execution
-- **Persistent Storage**: Automatically save and restore checklists across sessions
-- **Progress Monitoring**: Visual progress tracking with completion statistics
+- **Persistent Storage**: JSON-based storage in vim data directory with automatic save/restore across sessions
+- **Progress Monitoring**: Visual progress tracking with completion statistics and rich output formatting
+- **Action-Based Interface**: Simple actions (create, list, status, complete) for intuitive task management
 
 ### Context Compression System
 
-Intelligent context compression to optimize chat performance and manage memory usage.
+Intelligent context compression to optimize chat performance and manage memory usage with sophisticated quality assessment.
 
 - **Smart Compression**: Automatically compresses chat context when thresholds are exceeded
-- **Multiple Strategies**: Simple truncation, structured summarization, and priority-based compression
-- **Automatic Triggers**: Monitors token count, memory usage, and message count
-- **Quality Preservation**: Maintains important context markers and system messages
-- **Automatic Operation**: Fully automatic compression when thresholds are exceeded
-- **Configurable Thresholds**: Customize trigger conditions and compression behavior
+- **Multiple Strategies**: Simple truncation, structured summarization, and priority-based compression with fallback support
+- **Automatic Triggers**: Comprehensive monitoring of token count, memory usage, and message count
+- **Quality Preservation**: Maintains important context markers and system messages with quality assessment
+- **Automatic Operation**: Fully automatic compression when thresholds are exceeded with graceful degradation
+- **Configurable Thresholds**: Customize trigger conditions and compression behavior with strategy chaining
 
 ## 📦 Installation
 
@@ -185,9 +186,9 @@ use {
 
 ## 📁 Directory Structure
 
-**CodeCompanion Extension Architecture**
+**Modern Adapter Architecture**
 
-The plugin follows CodeCompanion's extension system architecture with a clean, modular structure:
+The plugin follows CodeCompanion's extension system with a clean, modular adapter architecture:
 
 ```
 lua/
@@ -198,11 +199,15 @@ lua/
 └── codecompanion_tools/
     ├── init.lua                  <-- Backward compatibility entry
     ├── config.lua                <-- Configuration utilities
-    ├── model_toggle.lua          <-- Model switching functionality
-    ├── rule.lua                  <-- Rule management functionality
-    ├── tool_registry.lua         <-- Tool registration system
+    ├── tool_registry.lua         <-- Centralized tool registration
     ├── chat.lua                  <-- Chat utilities
     ├── utils.lua                 <-- Common utilities
+    ├── adapters/                 <-- Modular adapter system
+    │   ├── base_adapter.lua      <-- Common adapter interface
+    │   ├── compression_adapter.lua <-- Context compression adapter
+    │   └── dag_adapter.lua       <-- DAG system adapter
+    ├── model_toggle.lua          <-- Model switching functionality
+    ├── rule.lua                  <-- Rule management functionality
     ├── dag/                      <-- DAG checklist system
     │   ├── checklist_tool.lua    <-- Unified checklist tool
     │   ├── dag_manager.lua       <-- DAG business logic
@@ -210,13 +215,13 @@ lua/
     │   ├── dag_types.lua         <-- DAG type definitions
     │   ├── dag_executor.lua      <-- Parallel execution engine
     │   ├── dag_system.lua        <-- Shared DAG system singleton
-    │   ├── storage.lua           <-- Persistent storage
+    │   ├── storage.lua           <-- Persistent JSON storage
     │   ├── validation.lua        <-- Input validation utilities
     │   └── shared_types.lua      <-- Shared type definitions
     └── context_compression/      <-- Context compression system
         ├── init.lua              <-- Main compression entry point
         ├── config.lua            <-- Compression configuration
-        ├── compression_manager.lua <-- Core compression logic
+        ├── compression_manager.lua <-- Core compression orchestration
         ├── trigger_detector.lua   <-- Threshold monitoring
         ├── importance_scorer.lua  <-- Message importance scoring
         ├── quality_assessor.lua   <-- Compression quality assessment
@@ -231,7 +236,7 @@ lua/
 
 ### Configuration Philosophy
 
-codecompanion-tools.nvim is designed to work intelligently with minimal configuration. All features have sensible defaults and can be customized as needed.
+codecompanion-tools.nvim is designed to work intelligently with minimal configuration through a modern adapter architecture. All features have sensible defaults and can be customized as needed, with unified configuration management and automatic tool registration.
 
 ### Basic Configuration
 
@@ -541,6 +546,8 @@ extensions = {
 
 - `:CodeCompanionToolsDebug` - Show extension status and registered tools
 - `:CodeCompanionRulesDebug` - Toggle rule manager debug logging
+- `:CodeCompanionDAGDebug` - Debug DAG system state and operations
+- `:CodeCompanionCompressStats` - Show context compression statistics
 
 #### Specific Issues
 
@@ -578,7 +585,7 @@ lua/codecompanion/_extensions/codecompanion-tools/init.lua
 
 ## 🔄 Backward Compatibility
 
-The original `require("codecompanion_tools").setup()` call is still supported and will automatically delegate to the proper extension system. This ensures existing configurations continue to work without modification.
+The original `require("codecompanion_tools").setup()` call is still supported and will automatically delegate to the proper extension system through the adapter architecture. This ensures existing configurations continue to work without modification while benefiting from the new modular design.
 
 ### Migration Guide
 
