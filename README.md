@@ -508,21 +508,21 @@ sequenceDiagram
     participant RT as Rule Manager
     participant LLM as LLM
 
-    Note over U,LLM: 正确的消息发送前更新流程
-    U->>CC: 发送消息
-    CC->>RT: 触发规则更新（通过 prompt_decorator）
-    RT->>CC: 更新规则引用
-    CC->>LLM: 消息（包含最新规则）
-    LLM->>CC: 响应（基于最新规则）
-    CC->>U: 显示响应
+    Note over U,LLM: Correct Pre-Message Rule Update Flow
+    U->>CC: Send message
+    CC->>RT: Trigger rule update (via prompt_decorator)
+    RT->>CC: Update rule references
+    CC->>LLM: Message (with latest rules)
+    LLM->>CC: Response (based on latest rules)
+    CC->>U: Display response
 ```
 
-**实现优势**:
-- ✅ **即时上下文**: AI在处理消息时已有完整的rule上下文
-- ✅ **准确响应**: 基于最新项目规则生成响应  
-- ✅ **无缝体验**: 用户感知不到延迟
-- ✅ **兼容性**: 与现有`prompt_decorator`完全兼容
-- ✅ **缓存优化**: 智能缓存避免重复处理
+**Implementation Advantages**:
+- ✅ **Immediate Context**: AI has complete rule context when processing messages
+- ✅ **Accurate Responses**: Generates responses based on latest project rules  
+- ✅ **Seamless Experience**: Users don't perceive any delay
+- ✅ **Compatibility**: Fully compatible with existing `prompt_decorator`
+- ✅ **Cache Optimization**: Smart caching avoids redundant processing
 
 ## 🔧 Troubleshooting
 
