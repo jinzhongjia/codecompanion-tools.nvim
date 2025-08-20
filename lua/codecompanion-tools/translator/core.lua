@@ -1,41 +1,42 @@
 local M = {}
-local cfg = require("codecompanion-tools.translator.config").opts
-local logger = require("codecompanion-tools.translator.logger")
+local utils = require("codecompanion-tools.common.utils")
 
-local function get_adapter(adapter_name)
-  local cc = require("codecompanion")
-  if adapter_name then
-    return adapter_name
-  end
-  return cfg.default_adapter
+ -- 延迟加载配置和日志
+ local function get_config()
+   return require("codecompanion-tools.translator.config").opts
+ end
+ 
+ local function get_logger()
+   return require("codecompanion-tools.translator.logger")
 end
 
 local function build_messages(text, target_lang)
+  local cfg = get_config()
   local lang_full = cfg.languages[target_lang] or target_lang
-  local system = string.format(cfg.prompt, lang_full)
+   local system = string.format(cfg.prompt.system, lang_full)
   return {
     { role = "system", content = system },
     { role = "user", content = text },
   }
 end
 
-local function send_request(messages, opts, cb)
-  local adapter_name = get_adapter(opts.adapter)
+ local function send_request(messages, adapter_name, cb)
   local http = require("codecompanion.http")
   local cc_config = require("codecompanion.config")
   local adapters = require("codecompanion.adapters")
   local schema = require("codecompanion.schema")
+  local logger = get_logger()
 
   adapter_name = adapter_name or cc_config.strategies.chat.adapter
   local adapter = adapters.resolve(adapter_name)
   if not adapter then
-    return cb("Cannot resolve adapter: " .. tostring(adapter_name))
+     return cb("无法解析适配器: " .. tostring(adapter_name))
   end
 
   adapter.opts.stream = false
-  adapter = adapter:map_schema_to_params(schema.get_default(adapter, { model = opts.model }))
+   adapter = adapter:map_schema_to_params(schema.get_default(adapter))
 
-  logger.debug("Resolved adapter=%s model=%s", adapter.name, adapter.model and adapter.model.name or "(default)")
+   logger:debug("使用适配器: %s", adapter.name)
 
   local client = http.new({ adapter = adapter })
   local payload = { messages = adapter:map_roles(messages) }
@@ -43,18 +44,18 @@ local function send_request(messages, opts, cb)
   client:request(payload, {
     callback = function(err, data, ad)
       if err then
-        logger.error("Request failed: %s", err.stderr or err.message or vim.inspect(err))
-        return cb(err.stderr or err.message or "Unknown error")
+         logger:error("请求失败: %s", err.stderr or err.message or vim.inspect(err))
+         return cb(err.stderr or err.message or "未知错误")
       end
       if not data then
-        return cb("Empty response")
+         return cb("响应为空")
       end
       local result = ad.handlers.chat_output(ad, data)
       if not result or not result.status then
-        return cb("Unable to parse response")
+         return cb("无法解析响应")
       end
       if result.status == "error" then
-        return cb(result.output or "LLM returned error")
+         return cb(result.output or "LLM 返回错误")
       end
       local content = result.output and result.output.content or ""
       if type(content) == "table" then
@@ -65,46 +66,34 @@ local function send_request(messages, opts, cb)
   }, { silent = true })
 end
 
-local function output_result(original, translated)
-  -- 仅输出译文，不再显示原文
-  local msg = translated
-  vim.schedule(function()
-    vim.notify("Translation finished", vim.log.levels.INFO, { title = "Translator", timeout = cfg.output.notification_timeout })
-    print(msg)
-  end)
+ local function output_result(translated)
+   local cfg = get_config()
+   utils.notify("翻译完成", vim.log.levels.INFO, "Translator")
+   print(translated)
   if cfg.output.copy_to_clipboard then
     vim.fn.setreg('+', translated)
+    utils.notify("已复制到剪贴板", vim.log.levels.INFO, "Translator")
   end
 end
 
 function M.translate_visual(opts)
   opts = opts or {}
-  local mode = vim.fn.mode()
-  local bufnr = vim.api.nvim_get_current_buf()
-  local start_line, end_line
-  if mode == 'v' or mode == 'V' then
-    start_line = vim.fn.getpos("'<")[2]
-    end_line = vim.fn.getpos("'>")[2]
-  else
-    -- use provided range from command invocation
-    start_line = vim.fn.line("'<")
-    end_line = vim.fn.line("'>")
-    if start_line == 0 or end_line == 0 then
-      -- fallback: current line
-      start_line = vim.fn.line('.')
-      end_line = start_line
-    end
-  end
-  local lines = vim.api.nvim_buf_get_lines(bufnr, start_line - 1, end_line, false)
-  local text = table.concat(lines, '\n')
-  logger.debug("Captured text lines=%d", #lines)
+  local cfg = get_config()
+  local logger = get_logger()
+  
+  -- 使用共享的工具函数获取选中文本
+  local text, start_line, end_line = utils.get_visual_selection()
+  logger:debug("获取文本: 第 %d-%d 行", start_line, end_line)
+  
   local target = opts.target_lang or cfg.default_target_lang
   local messages = build_messages(text, target)
-  send_request(messages, opts, function(err, translated)
+   local adapter = opts.adapter or cfg.adapter
+   
+   send_request(messages, adapter, function(err, translated)
     if err then
-      return vim.notify("Translation failed: " .. err, vim.log.levels.ERROR, { title = "Translator" })
+       return utils.notify("翻译失败: " .. err, vim.log.levels.ERROR, "Translator")
     end
-    output_result(text, translated)
+     output_result(translated)
   end)
 end
 
