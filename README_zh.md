@@ -9,6 +9,7 @@
 ## ✨ 功能特性
 
 ### 🌐 翻译器模块
+
 - **AI 驱动翻译**：利用 CodeCompanion 的 AI 适配器实现精准翻译
 - **多语言支持**：支持 12+ 种语言，包括中文、英文、日文、韩文、法文、德文、西班牙文、俄文、意大利文、葡萄牙文、越南文和阿拉伯文
 - **可视模式选择**：直接从可视模式翻译选中的文本
@@ -43,28 +44,28 @@ require("codecompanion-tools").setup({
   translator = {
     -- 使用特定适配器（可选，默认使用 CodeCompanion 的默认适配器）
     default_adapter = nil,
-    
+
     -- 翻译的默认目标语言
     default_target_lang = "en",
-    
+
     -- 调试设置
     debug = {
       enabled = true,
       log_level = "INFO", -- DEBUG|INFO|WARN|ERROR
     },
-    
+
     -- 旧版 CodeCompanion 的回退选项
     fallback = {
       use_chat = false, -- 打开聊天窗口而不是直接输出
     },
-    
+
     -- 输出设置
     output = {
       show_original = true,           -- 在输出中显示原文
       notification_timeout = 4000,    -- 通知显示时间（毫秒）
       copy_to_clipboard = false,      -- 自动复制翻译到剪贴板
     },
-    
+
     -- 自定义提示词模板（%s 将被替换为目标语言）
     prompt = [[You are a professional software localization translator.
 Translate the following content into %s.
@@ -73,7 +74,7 @@ Return only the translated text.
 Do not add any explanation.
 Do not output any emojis or decorative symbols that are not present in the source.
 Preserve the original meaning and technical terms.]],
-    
+
     -- 语言映射（代码 -> 完整名称）
     languages = {
       zh = "Chinese",
@@ -110,12 +111,12 @@ require("codecompanion-tools").setup({
   translator = {
     default_adapter = "anthropic",  -- 使用特定的 AI 提供商
     default_target_lang = "zh",
-    debug = { 
-      enabled = true, 
+    debug = {
+      enabled = true,
       log_level = "DEBUG"  -- 详细日志用于调试
     },
-    output = { 
-      show_original = true, 
+    output = {
+      show_original = true,
       notification_timeout = 5000,
       copy_to_clipboard = true  -- 自动复制翻译
     },
@@ -128,14 +129,17 @@ require("codecompanion-tools").setup({
 ### 命令
 
 #### `:CodeCompanionTranslate [target_lang]`
+
 将选中的文本翻译为指定语言。
 
 **使用方法：**
+
 1. 在可视模式下选择文本
 2. 运行 `:CodeCompanionTranslate zh` 翻译为中文
 3. 或运行 `:CodeCompanionTranslate` 使用默认目标语言
 
 **示例：**
+
 ```vim
 " 翻译为中文
 :'<,'>CodeCompanionTranslate zh
@@ -148,13 +152,16 @@ require("codecompanion-tools").setup({
 ```
 
 #### `:CodeCompanionTranslatorLog [action]`
+
 管理翻译器调试日志。
 
 **操作：**
+
 - 无参数：在新标签页中打开日志文件
 - `clear`：清空日志文件
 
 **示例：**
+
 ```vim
 " 查看日志
 :CodeCompanionTranslatorLog
@@ -189,6 +196,7 @@ require("codecompanion-tools").setup(opts)
 ```
 
 **参数：**
+
 - `opts` (table): 配置选项
   - `translator` (table|false): 翻译器模块配置。设置为 `false` 可禁用。
 
@@ -219,14 +227,14 @@ core.translate_visual({
 
 ## 📝 支持的语言
 
-| 代码 | 语言       | 代码 | 语言       |
-|------|-----------|------|-----------|
-| zh   | 中文      | es   | 西班牙文   |
-| en   | 英文      | ru   | 俄文       |
-| ja   | 日文      | it   | 意大利文   |
-| ko   | 韩文      | pt   | 葡萄牙文   |
-| fr   | 法文      | vi   | 越南文     |
-| de   | 德文      | ar   | 阿拉伯文   |
+| 代码 | 语言 | 代码 | 语言     |
+| ---- | ---- | ---- | -------- |
+| zh   | 中文 | es   | 西班牙文 |
+| en   | 英文 | ru   | 俄文     |
+| ja   | 日文 | it   | 意大利文 |
+| ko   | 韩文 | pt   | 葡萄牙文 |
+| fr   | 法文 | vi   | 越南文   |
+| de   | 德文 | ar   | 阿拉伯文 |
 
 您也可以通过提供完整名称来使用任何自定义语言。
 
@@ -246,6 +254,7 @@ require("codecompanion-tools").setup({
 ```
 
 ### 查看日志
+
 ```vim
 :CodeCompanionTranslatorLog
 ```
@@ -288,3 +297,4 @@ require("codecompanion-tools").setup({
 ---
 
 为 Neovim 社区用 ❤️ 制作
+

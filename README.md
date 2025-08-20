@@ -9,6 +9,7 @@ A collection of productivity tools for [CodeCompanion.nvim](https://github.com/o
 ## ✨ Features
 
 ### 🌐 Translator Module
+
 - **AI-Powered Translation**: Leverages CodeCompanion's AI adapters for accurate translations
 - **Multi-Language Support**: Supports 12+ languages including Chinese, English, Japanese, Korean, French, German, Spanish, Russian, Italian, Portuguese, Vietnamese, and Arabic
 - **Visual Mode Selection**: Translate selected text directly from visual mode
@@ -43,28 +44,28 @@ require("codecompanion-tools").setup({
   translator = {
     -- Use specific adapter (optional, defaults to CodeCompanion's default)
     default_adapter = nil,
-    
+
     -- Default target language for translations
     default_target_lang = "en",
-    
+
     -- Debug settings
     debug = {
       enabled = true,
       log_level = "INFO", -- DEBUG|INFO|WARN|ERROR
     },
-    
+
     -- Fallback options for older CodeCompanion versions
     fallback = {
       use_chat = false, -- Open chat window instead of direct output
     },
-    
+
     -- Output settings
     output = {
       show_original = true,           -- Show original text in output
       notification_timeout = 4000,    -- Notification display time (ms)
       copy_to_clipboard = false,      -- Auto-copy translation to clipboard
     },
-    
+
     -- Custom prompt template (%s will be replaced with target language)
     prompt = [[You are a professional software localization translator.
 Translate the following content into %s.
@@ -73,7 +74,7 @@ Return only the translated text.
 Do not add any explanation.
 Do not output any emojis or decorative symbols that are not present in the source.
 Preserve the original meaning and technical terms.]],
-    
+
     -- Language mappings (code -> full name)
     languages = {
       zh = "Chinese",
@@ -110,12 +111,12 @@ require("codecompanion-tools").setup({
   translator = {
     default_adapter = "anthropic",  -- Use specific AI provider
     default_target_lang = "zh",
-    debug = { 
-      enabled = true, 
+    debug = {
+      enabled = true,
       log_level = "DEBUG"  -- Verbose logging for debugging
     },
-    output = { 
-      show_original = true, 
+    output = {
+      show_original = true,
       notification_timeout = 5000,
       copy_to_clipboard = true  -- Auto-copy translations
     },
@@ -128,14 +129,17 @@ require("codecompanion-tools").setup({
 ### Commands
 
 #### `:CodeCompanionTranslate [target_lang]`
+
 Translate selected text to the specified language.
 
 **Usage:**
+
 1. Select text in visual mode
 2. Run `:CodeCompanionTranslate zh` to translate to Chinese
 3. Or run `:CodeCompanionTranslate` to use default target language
 
 **Examples:**
+
 ```vim
 " Translate to Chinese
 :'<,'>CodeCompanionTranslate zh
@@ -148,13 +152,16 @@ Translate selected text to the specified language.
 ```
 
 #### `:CodeCompanionTranslatorLog [action]`
+
 Manage translator debug logs.
 
 **Actions:**
+
 - No argument: Open log file in new tab
 - `clear`: Clear the log file
 
 **Examples:**
+
 ```vim
 " View logs
 :CodeCompanionTranslatorLog
@@ -189,6 +196,7 @@ require("codecompanion-tools").setup(opts)
 ```
 
 **Parameters:**
+
 - `opts` (table): Configuration options
   - `translator` (table|false): Translator module configuration. Set to `false` to disable.
 
@@ -219,14 +227,14 @@ core.translate_visual({
 
 ## 📝 Supported Languages
 
-| Code | Language   | Code | Language   |
-|------|-----------|------|-----------|
-| zh   | Chinese   | es   | Spanish    |
-| en   | English   | ru   | Russian    |
-| ja   | Japanese  | it   | Italian    |
-| ko   | Korean    | pt   | Portuguese |
-| fr   | French    | vi   | Vietnamese |
-| de   | German    | ar   | Arabic     |
+| Code | Language | Code | Language   |
+| ---- | -------- | ---- | ---------- |
+| zh   | Chinese  | es   | Spanish    |
+| en   | English  | ru   | Russian    |
+| ja   | Japanese | it   | Italian    |
+| ko   | Korean   | pt   | Portuguese |
+| fr   | French   | vi   | Vietnamese |
+| de   | German   | ar   | Arabic     |
 
 You can also use any custom language by providing its full name.
 
@@ -246,6 +254,7 @@ require("codecompanion-tools").setup({
 ```
 
 ### View Logs
+
 ```vim
 :CodeCompanionTranslatorLog
 ```
@@ -288,3 +297,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 Made with ❤️ for the Neovim community
+
