@@ -30,27 +30,7 @@ A collection of productivity tools for [CodeCompanion.nvim](https://github.com/o
   dependencies = {
     "olimorris/codecompanion.nvim",
   },
-  config = function()
-    require("codecompanion-tools").setup({
-      -- your configuration
-    })
-  end,
-}
-```
-
-### Using [packer.nvim](https://github.com/wbthomason/packer.nvim)
-
-```lua
-use {
-  "codecompanion-tools.nvim",
-  requires = {
-    "olimorris/codecompanion.nvim",
-  },
-  config = function()
-    require("codecompanion-tools").setup({
-      -- your configuration
-    })
-  end,
+  opts = {},
 }
 ```
 

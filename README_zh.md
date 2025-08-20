@@ -30,27 +30,7 @@
   dependencies = {
     "olimorris/codecompanion.nvim",
   },
-  config = function()
-    require("codecompanion-tools").setup({
-      -- 您的配置
-    })
-  end,
-}
-```
-
-### 使用 [packer.nvim](https://github.com/wbthomason/packer.nvim)
-
-```lua
-use {
-  "codecompanion-tools.nvim",
-  requires = {
-    "olimorris/codecompanion.nvim",
-  },
-  config = function()
-    require("codecompanion-tools").setup({
-      -- 您的配置
-    })
-  end,
+  opts = {},
 }
 ```
 
