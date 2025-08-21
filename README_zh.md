@@ -43,7 +43,8 @@
 require("codecompanion-tools").setup({
   translator = {
     -- 使用特定适配器（可选，默认使用 CodeCompanion 的默认适配器）
-    default_adapter = nil,
+    adapter = nil,       -- 兼容字段: default_adapter
+    model = nil,         -- 默认模型（兼容字段: default_model）
 
     -- 翻译的默认目标语言
     default_target_lang = "en",
@@ -109,7 +110,8 @@ require("codecompanion-tools").setup({
 ```lua
 require("codecompanion-tools").setup({
   translator = {
-    default_adapter = "anthropic",  -- 使用特定的 AI 提供商
+    adapter = "anthropic",  -- 使用特定的 AI 提供商
+    model = "claude-3-5-sonnet",   -- 默认翻译模型
     default_target_lang = "zh",
     debug = {
       enabled = true,
@@ -136,7 +138,7 @@ require("codecompanion-tools").setup({
 
 1. 在可视模式下选择文本
 2. 运行 `:CodeCompanionTranslate zh` 翻译为中文
-3. 或运行 `:CodeCompanionTranslate` 使用默认目标语言
+3. 或运行 `:CodeCompanionTranslate` 使用默认目标语言与默认模型
 
 **示例：**
 
@@ -149,6 +151,7 @@ require("codecompanion-tools").setup({
 
 " 使用默认目标语言
 :'<,'>CodeCompanionTranslate
+
 ```
 
 #### `:CodeCompanionTranslatorLog [action]`

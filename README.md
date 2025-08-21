@@ -43,7 +43,8 @@ A collection of productivity tools for [CodeCompanion.nvim](https://github.com/o
 require("codecompanion-tools").setup({
   translator = {
     -- Use specific adapter (optional, defaults to CodeCompanion's default)
-    default_adapter = nil,
+    adapter = nil,          -- alias: default_adapter
+    model = nil,            -- default model (alias: default_model)
 
     -- Default target language for translations
     default_target_lang = "en",
@@ -109,7 +110,8 @@ require("codecompanion-tools").setup({
 ```lua
 require("codecompanion-tools").setup({
   translator = {
-    default_adapter = "anthropic",  -- Use specific AI provider
+    adapter = "anthropic",  -- Use specific AI provider
+    model = "claude-3-5-sonnet",    -- Default model for translation requests
     default_target_lang = "zh",
     debug = {
       enabled = true,
@@ -136,7 +138,7 @@ Translate selected text to the specified language.
 
 1. Select text in visual mode
 2. Run `:CodeCompanionTranslate zh` to translate to Chinese
-3. Or run `:CodeCompanionTranslate` to use default target language
+3. Or run `:CodeCompanionTranslate` to use default target language and configured default model
 
 **Examples:**
 
@@ -149,6 +151,7 @@ Translate selected text to the specified language.
 
 " Use default target language
 :'<,'>CodeCompanionTranslate
+
 ```
 
 #### `:CodeCompanionTranslatorLog [action]`
