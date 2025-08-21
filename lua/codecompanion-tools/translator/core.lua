@@ -20,7 +20,7 @@ local function build_messages(text, target_lang)
   }
 end
 
- local function send_request(messages, adapter_name, cb)
+ local function send_request(messages, adapter_name, model_name, cb)
   local http = require("codecompanion.http")
   local cc_config = require("codecompanion.config")
   local adapters = require("codecompanion.adapters")
@@ -34,6 +34,12 @@ end
   end
 
   adapter.opts.stream = false
+  -- 如果用户指定了模型，则覆盖 schema 默认值
+  if model_name and model_name ~= '' then
+    if adapter.schema and adapter.schema.model then
+      adapter.schema.model.default = model_name
+    end
+  end
    adapter = adapter:map_schema_to_params(schema.get_default(adapter))
 
    logger:debug("使用适配器: %s", adapter.name)
@@ -68,7 +74,7 @@ end
 
  local function output_result(translated)
    local cfg = get_config()
-   utils.notify("翻译完成", vim.log.levels.INFO, "Translator")
+   -- 只打印翻译结果
    print(translated)
   if cfg.output.copy_to_clipboard then
     vim.fn.setreg('+', translated)
@@ -81,15 +87,21 @@ function M.translate_visual(opts)
   local cfg = get_config()
   local logger = get_logger()
   
-  -- 使用共享的工具函数获取选中文本
-  local text, start_line, end_line = utils.get_visual_selection()
-  logger:debug("获取文本: 第 %d-%d 行", start_line, end_line)
+  -- 严格获取可视选区；若无选区则使用原函数（保持向后兼容）
+  local text, start_line, end_line = utils.get_strict_visual_selection()
+  if text then
+    logger:debug("获取选区文本: 第 %d-%d 行", start_line, end_line)
+  else
+    text, start_line, end_line = utils.get_visual_selection()
+    logger:debug("无严格选区，退回通用获取: 第 %d-%d 行", start_line, end_line)
+  end
   
   local target = opts.target_lang or cfg.default_target_lang
   local messages = build_messages(text, target)
-   local adapter = opts.adapter or cfg.adapter
-   
-   send_request(messages, adapter, function(err, translated)
+  local adapter = opts.adapter or cfg.adapter
+  local model = opts.model or cfg.model
+
+  send_request(messages, adapter, model, function(err, translated)
     if err then
        return utils.notify("翻译失败: " .. err, vim.log.levels.ERROR, "Translator")
     end
