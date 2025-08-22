@@ -16,13 +16,13 @@ end
 -- 设置函数
 function M.setup(opts)
   config = vim.tbl_deep_extend("force", config, opts or {})
-  
+
   -- 创建命令
   vim.api.nvim_create_user_command("CodeCompanionYourModule", function(cmd)
     -- 命令处理逻辑
   end, {
     nargs = "*",
-    desc = "Your module description"
+    desc = "Your module description",
   })
 end
 

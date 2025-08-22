@@ -23,12 +23,15 @@ function Logger:new(module_name, config)
 end
 
 function Logger:should_log(level)
-  if not self.config.enabled then return false end
+  if not self.config.enabled then
+    return false
+  end
   return level_map[level] >= level_map[self.config.log_level]
 end
 
 function Logger:write(level, msg)
-  local line = string.format("[%s] [%s] %s %s", self.module_name:upper(), level, os.date("%H:%M:%S"), msg)
+  local line =
+    string.format("[%s] [%s] %s %s", self.module_name:upper(), level, os.date("%H:%M:%S"), msg)
   local fd = io.open(self.path, "a")
   if fd then
     fd:write(line .. "\n")
@@ -37,24 +40,34 @@ function Logger:write(level, msg)
 end
 
 function Logger:log(level, msg, ...)
-  if not self:should_log(level) then return end
-  if select('#', ...) > 0 then
+  if not self:should_log(level) then
+    return
+  end
+  if select("#", ...) > 0 then
     msg = string.format(msg, ...)
   end
   self:write(level, msg)
 end
 
-function Logger:debug(...) self:log("DEBUG", ...) end
-function Logger:info(...) self:log("INFO", ...) end
-function Logger:warn(...) self:log("WARN", ...) end
-function Logger:error(...) self:log("ERROR", ...) end
+function Logger:debug(...)
+  self:log("DEBUG", ...)
+end
+function Logger:info(...)
+  self:log("INFO", ...)
+end
+function Logger:warn(...)
+  self:log("WARN", ...)
+end
+function Logger:error(...)
+  self:log("ERROR", ...)
+end
 
 function Logger:open()
   vim.cmd("tabnew " .. self.path)
 end
 
 function Logger:clear()
-  local fd = io.open(self.path, 'w')
+  local fd = io.open(self.path, "w")
   if fd then
     fd:write("")
     fd:close()

@@ -1,33 +1,33 @@
 local M = {}
 
 ---@class CodeCompanionToolsConfig
- ---@field translator table|nil 翻译模块配置
- ---@field modules table<string, boolean|table> 模块启用状态和配置
- 
- -- 可用的模块列表
- local available_modules = {
-   translator = "codecompanion-tools.translator",
-   -- 未来可以添加更多模块，例如:
-   -- formatter = "codecompanion-tools.formatter",
-   -- refactor = "codecompanion-tools.refactor",
-   -- docgen = "codecompanion-tools.docgen",
- }
+---@field translator table|nil 翻译模块配置
+---@field modules table<string, boolean|table> 模块启用状态和配置
+
+-- 可用的模块列表
+local available_modules = {
+  translator = "codecompanion-tools.translator",
+  -- 未来可以添加更多模块，例如:
+  -- formatter = "codecompanion-tools.formatter",
+  -- refactor = "codecompanion-tools.refactor",
+  -- docgen = "codecompanion-tools.docgen",
+}
 
 ---Setup entry for codecompanion-tools
 ---@param opts CodeCompanionToolsConfig
 function M.setup(opts)
   opts = opts or {}
-   
-   -- 检查 CodeCompanion 是否可用
-   local utils = require("codecompanion-tools.common.utils")
-   if not utils.check_codecompanion() then
-     return
+
+  -- 检查 CodeCompanion 是否可用
+  local utils = require("codecompanion-tools.common.utils")
+  if not utils.check_codecompanion() then
+    return
   end
-  
+
   -- 加载各个模块
   for module_name, module_path in pairs(available_modules) do
     local module_config = opts[module_name]
-    
+
     -- 如果模块配置不是 false，则加载模块
     if module_config ~= false then
       local ok, module = pcall(require, module_path)
@@ -36,7 +36,7 @@ function M.setup(opts)
         -- 如果配置是 table，使用用户配置
         local config = (type(module_config) == "table") and module_config or {}
         module.setup(config)
-        
+
         -- 记录已加载的模块
         M[module_name] = module
       else
@@ -64,9 +64,9 @@ end
 -- 健康检查
 function M.health()
   local health = vim.health or require("health")
-  
+
   health.start("CodeCompanion Tools")
-  
+
   -- 检查 CodeCompanion
   local cc_ok = pcall(require, "codecompanion")
   if cc_ok then
@@ -75,7 +75,7 @@ function M.health()
     health.error("CodeCompanion is not installed")
     return
   end
-  
+
   -- 检查已加载的模块
   local loaded = M.loaded_modules()
   if #loaded > 0 then

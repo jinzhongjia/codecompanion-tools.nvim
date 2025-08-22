@@ -3,21 +3,21 @@
 require("codecompanion-tools").setup({
   -- 翻译模块
   translator = {
-    adapter = nil,              -- nil 使用 CodeCompanion 默认适配器
+    adapter = nil, -- nil 使用 CodeCompanion 默认适配器
     default_target_lang = "zh", -- 默认目标语言
     debug = {
-      enabled = false,          -- 生产环境建议关闭
-      log_level = "INFO"        -- DEBUG|INFO|WARN|ERROR
+      enabled = false, -- 生产环境建议关闭
+      log_level = "INFO", -- DEBUG|INFO|WARN|ERROR
     },
     output = {
       notification_timeout = 3000,
-      copy_to_clipboard = false
+      copy_to_clipboard = false,
     },
     -- 自定义提示词（可选）
     prompt = {
       system = [[You are a professional translator. Translate the following content into %s.
 Keep code blocks, technical terms, and formatting unchanged.
-Return only the translated text without any explanation.]]
+Return only the translated text without any explanation.]],
     },
     -- 支持的语言（可扩展）
     languages = {
@@ -29,9 +29,9 @@ Return only the translated text without any explanation.]]
       de = "German",
       es = "Spanish",
       ru = "Russian",
-    }
+    },
   },
-  
+
   -- 未来的模块示例（当前未实现）
   -- formatter = false,  -- 禁用格式化模块
   -- refactor = {        -- 重构模块配置
