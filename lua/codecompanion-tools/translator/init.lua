@@ -13,9 +13,11 @@ function M.create_commands()
     local args = vim.split(cmd.args or "", " ", { trimempty = true })
     local cfg = require("codecompanion-tools.translator.config").opts
     local target = args[1]
-    if not target or target == "" or not config.opts.languages[target] then
+    if not target or target == "" then
       target = cfg.default_target_lang
-      -- No longer prompt default language, keep output clean
+    elseif not config.opts.languages[target] then
+      utils.notify("Invalid language '" .. target .. "', falling back to default: " .. cfg.default_target_lang, vim.log.levels.WARN, "Translator")
+      target = cfg.default_target_lang
     end
     core.translate_visual({ target_lang = target })
   end, {
