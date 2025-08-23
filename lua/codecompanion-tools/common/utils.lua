@@ -4,11 +4,11 @@ local M = {}
 -- Get selected text
 function M.get_visual_selection()
   local bufnr = vim.api.nvim_get_current_buf()
-   local ok_start, pos_start = pcall(vim.fn.getpos, "'<")
-   local ok_end, pos_end = pcall(vim.fn.getpos, "'>")
+  local ok_start, pos_start = pcall(vim.fn.getpos, "'<")
+  local ok_end, pos_end = pcall(vim.fn.getpos, "'>")
 
   -- Fall back to current line when no valid visual selection
-   if not ok_start or not ok_end or pos_start[2] == 0 or pos_end[2] == 0 then
+  if not ok_start or not ok_end or pos_start[2] == 0 or pos_end[2] == 0 then
     local l = vim.fn.line(".")
     local line = vim.api.nvim_buf_get_lines(bufnr, l - 1, l, false)[1] or ""
     return line, l, l

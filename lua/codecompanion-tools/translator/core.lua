@@ -34,12 +34,12 @@ local function send_request(messages, adapter_name, model_name, cb)
   end
 
   adapter.opts.stream = false
-   -- Create overrides for schema if user specified a model
-   local overrides = {}
+  -- Create overrides for schema if user specified a model
+  local overrides = {}
   if model_name and model_name ~= "" then
-     overrides.model = model_name
+    overrides.model = model_name
   end
-   adapter = adapter:map_schema_to_params(schema.get_default(adapter, overrides))
+  adapter = adapter:map_schema_to_params(schema.get_default(adapter, overrides))
 
   logger:debug("Using adapter: %s", adapter.name)
 
