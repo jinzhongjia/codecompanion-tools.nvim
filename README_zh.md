@@ -130,31 +130,31 @@ require("codecompanion-tools").setup({
 
 ### 命令
 
-#### `:CodeCompanionTranslate [target_lang]`
+ #### `:CCTranslate [target_lang]`
 
 将选中的文本翻译为指定语言。
 
 **使用方法：**
 
 1. 在可视模式下选择文本
-2. 运行 `:CodeCompanionTranslate zh` 翻译为中文
-3. 或运行 `:CodeCompanionTranslate` 使用默认目标语言与默认模型
+ 2. 运行 `:CCTranslate zh` 翻译为中文
+ 3. 或运行 `:CCTranslate` 使用默认目标语言与默认模型
 
 **示例：**
 
 ```vim
 " 翻译为中文
-:'<,'>CodeCompanionTranslate zh
+ :'<,'>CCTranslate zh
 
 " 翻译为日文
-:'<,'>CodeCompanionTranslate ja
+ :'<,'>CCTranslate ja
 
 " 使用默认目标语言
-:'<,'>CodeCompanionTranslate
+ :'<,'>CCTranslate
 
 ```
 
-#### `:CodeCompanionTranslatorLog [action]`
+ #### `:CCTranslatorLog [action]`
 
 管理翻译器调试日志。
 
@@ -167,10 +167,10 @@ require("codecompanion-tools").setup({
 
 ```vim
 " 查看日志
-:CodeCompanionTranslatorLog
+ :CCTranslatorLog
 
 " 清空日志
-:CodeCompanionTranslatorLog clear
+ :CCTranslatorLog clear
 ```
 
 ### 快捷键映射（可选）
@@ -179,15 +179,15 @@ require("codecompanion-tools").setup({
 
 ```lua
 -- 翻译为默认语言
-vim.keymap.set('v', '<leader>tt', ':CodeCompanionTranslate<CR>', { desc = '翻译选中内容' })
+ vim.keymap.set('v', '<leader>tt', ':CCTranslate<CR>', { desc = '翻译选中内容' })
 
 -- 翻译为特定语言
-vim.keymap.set('v', '<leader>tz', ':CodeCompanionTranslate zh<CR>', { desc = '翻译为中文' })
-vim.keymap.set('v', '<leader>te', ':CodeCompanionTranslate en<CR>', { desc = '翻译为英文' })
-vim.keymap.set('v', '<leader>tj', ':CodeCompanionTranslate ja<CR>', { desc = '翻译为日文' })
+ vim.keymap.set('v', '<leader>tz', ':CCTranslate zh<CR>', { desc = '翻译为中文' })
+ vim.keymap.set('v', '<leader>te', ':CCTranslate en<CR>', { desc = '翻译为英文' })
+ vim.keymap.set('v', '<leader>tj', ':CCTranslate ja<CR>', { desc = '翻译为日文' })
 
 -- 查看翻译器日志
-vim.keymap.set('n', '<leader>tl', ':CodeCompanionTranslatorLog<CR>', { desc = '查看翻译器日志' })
+ vim.keymap.set('n', '<leader>tl', ':CCTranslatorLog<CR>', { desc = '查看翻译器日志' })
 ```
 
 ## 🔧 API 参考
@@ -259,7 +259,7 @@ require("codecompanion-tools").setup({
 ### 查看日志
 
 ```vim
-:CodeCompanionTranslatorLog
+ :CCTranslatorLog
 ```
 
 ### 常见问题

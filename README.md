@@ -130,7 +130,7 @@ require("codecompanion-tools").setup({
 
 ### Commands
 
-#### `:CodeCompanionTranslate [target_lang]`
+#### `:CCTranslate [target_lang]`
 
 Translate selected text to the specified language.
 
@@ -144,17 +144,17 @@ Translate selected text to the specified language.
 
 ```vim
 " Translate to Chinese
-:'<,'>CodeCompanionTranslate zh
+:'<,'>CCTranslate zh
 
 " Translate to Japanese
-:'<,'>CodeCompanionTranslate ja
+:'<,'>CCTranslate ja
 
 " Use default target language
-:'<,'>CodeCompanionTranslate
+:'<,'>CCTranslate
 
 ```
 
-#### `:CodeCompanionTranslatorLog [action]`
+#### `:CCTranslatorLog [action]`
 
 Manage translator debug logs.
 
@@ -167,10 +167,10 @@ Manage translator debug logs.
 
 ```vim
 " View logs
-:CodeCompanionTranslatorLog
+:CCTranslatorLog
 
 " Clear logs
-:CodeCompanionTranslatorLog clear
+:CCTranslatorLog clear
 ```
 
 ### Key Mappings (Optional)
@@ -179,15 +179,15 @@ Add these to your Neovim configuration for quick access:
 
 ```lua
 -- Translate to default language
-vim.keymap.set('v', '<leader>tt', ':CodeCompanionTranslate<CR>', { desc = 'Translate selection' })
+vim.keymap.set('v', '<leader>tt', ':CCTranslate<CR>', { desc = 'Translate selection' })
 
 -- Translate to specific languages
-vim.keymap.set('v', '<leader>tz', ':CodeCompanionTranslate zh<CR>', { desc = 'Translate to Chinese' })
-vim.keymap.set('v', '<leader>te', ':CodeCompanionTranslate en<CR>', { desc = 'Translate to English' })
-vim.keymap.set('v', '<leader>tj', ':CodeCompanionTranslate ja<CR>', { desc = 'Translate to Japanese' })
+vim.keymap.set('v', '<leader>tz', ':CCTranslate zh<CR>', { desc = 'Translate to Chinese' })
+vim.keymap.set('v', '<leader>te', ':CCTranslate en<CR>', { desc = 'Translate to English' })
+vim.keymap.set('v', '<leader>tj', ':CCTranslate ja<CR>', { desc = 'Translate to Japanese' })
 
 -- View translator logs
-vim.keymap.set('n', '<leader>tl', ':CodeCompanionTranslatorLog<CR>', { desc = 'View translator logs' })
+vim.keymap.set('n', '<leader>tl', ':CCTranslatorLog<CR>', { desc = 'View translator logs' })
 ```
 
 ## 🔧 API Reference
@@ -259,7 +259,7 @@ require("codecompanion-tools").setup({
 ### View Logs
 
 ```vim
-:CodeCompanionTranslatorLog
+:CCTranslatorLog
 ```
 
 ### Common Issues
