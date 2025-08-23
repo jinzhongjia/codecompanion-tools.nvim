@@ -45,10 +45,10 @@ function M.create_commands()
     local logger = require("codecompanion-tools.translator.logger")
     local sub = cmd.args
     if sub == "clear" then
-      logger.clear()
+      logger:clear()
       return utils.notify("Logs cleared", vim.log.levels.INFO, "Translator")
     end
-    logger.open()
+    logger:open()
   end, {
     nargs = "?",
     desc = "View or clear translator logs",

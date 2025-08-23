@@ -42,11 +42,25 @@ function Logger:write(level, msg)
     vim.fn.mkdir(log_dir, "p")
   end
 
-  local fd = io.open(self.path, "a")
-  if fd then
-    fd:write(line .. "\n")
-    fd:close()
-  end
+  -- Use vim.uv for async file operations
+  vim.uv.fs_open(self.path, "a", 438, function(err, fd) -- 438 = 0666 in octal
+    if err then
+      vim.schedule(function()
+        vim.notify("Failed to open log file: " .. err, vim.log.levels.ERROR)
+      end)
+      return
+    end
+
+    local data = line .. "\n"
+    vim.uv.fs_write(fd, data, -1, function(write_err)
+      if write_err then
+        vim.schedule(function()
+          vim.notify("Failed to write to log file: " .. write_err, vim.log.levels.ERROR)
+        end)
+      end
+      vim.uv.fs_close(fd)
+    end)
+  end)
 end
 
 function Logger:log(level, msg, ...)
@@ -77,11 +91,25 @@ function Logger:open()
 end
 
 function Logger:clear()
-  local fd = io.open(self.path, "w")
-  if fd then
-    fd:write("")
-    fd:close()
-  end
+  -- Use vim.uv for async file operations
+  vim.uv.fs_open(self.path, "w", 438, function(err, fd) -- 438 = 0666 in octal
+    if err then
+      vim.schedule(function()
+        vim.notify("Failed to open log file for clearing: " .. err, vim.log.levels.ERROR)
+      end)
+      return
+    end
+
+    -- Write empty string to clear the file
+    vim.uv.fs_write(fd, "", 0, function(write_err)
+      if write_err then
+        vim.schedule(function()
+          vim.notify("Failed to clear log file: " .. write_err, vim.log.levels.ERROR)
+        end)
+      end
+      vim.uv.fs_close(fd)
+    end)
+  end)
 end
 
 -- Factory function

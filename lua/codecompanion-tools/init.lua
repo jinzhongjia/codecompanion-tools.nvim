@@ -1,11 +1,11 @@
 local M = {}
 
 ---@class CodeCompanionToolsConfig
- ---@field translator? table|boolean Configuration for the translator module. Can be a config table, `true` to enable with defaults, or `false` to disable
- --- Future modules can be added as top-level fields, for example:
- --- @field formatter? table|boolean Configuration for the formatter module
- --- @field refactor? table|boolean Configuration for the refactor module
- --- @field docgen? table|boolean Configuration for the docgen module
+---@field translator? table|boolean Configuration for the translator module. Can be a config table, `true` to enable with defaults, or `false` to disable
+--- Future modules can be added as top-level fields, for example:
+--- @field formatter? table|boolean Configuration for the formatter module
+--- @field refactor? table|boolean Configuration for the refactor module
+--- @field docgen? table|boolean Configuration for the docgen module
 
 -- Available modules list
 local available_modules = {
