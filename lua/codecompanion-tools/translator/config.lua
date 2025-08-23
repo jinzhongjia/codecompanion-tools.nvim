@@ -1,8 +1,8 @@
 local M = {}
 
 local defaults = {
-  adapter = nil, -- 使用 CodeCompanion 默认适配器 (也可用 default_adapter 传入)
-  model = nil, -- 默认模型 (也可用 default_model 传入)
+  adapter = nil, -- Use CodeCompanion default adapter (can also pass via default_adapter)
+  model = nil, -- Default model (can also pass via default_model)
   default_target_lang = "en",
   debug = {
     enabled = true,

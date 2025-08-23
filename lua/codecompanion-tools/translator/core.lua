@@ -1,7 +1,7 @@
 local M = {}
 local utils = require("codecompanion-tools.common.utils")
 
--- 延迟加载配置和日志
+-- Lazy load configuration and logger
 local function get_config()
   return require("codecompanion-tools.translator.config").opts
 end
@@ -30,11 +30,11 @@ local function send_request(messages, adapter_name, model_name, cb)
   adapter_name = adapter_name or cc_config.strategies.chat.adapter
   local adapter = adapters.resolve(adapter_name)
   if not adapter then
-    return cb("无法解析适配器: " .. tostring(adapter_name))
+    return cb("Failed to resolve adapter: " .. tostring(adapter_name))
   end
 
   adapter.opts.stream = false
-  -- 如果用户指定了模型，则覆盖 schema 默认值
+  -- Override schema default if user specified a model
   if model_name and model_name ~= "" then
     if adapter.schema and adapter.schema.model then
       adapter.schema.model.default = model_name
@@ -42,7 +42,7 @@ local function send_request(messages, adapter_name, model_name, cb)
   end
   adapter = adapter:map_schema_to_params(schema.get_default(adapter))
 
-  logger:debug("使用适配器: %s", adapter.name)
+  logger:debug("Using adapter: %s", adapter.name)
 
   local client = http.new({ adapter = adapter })
   local payload = { messages = adapter:map_roles(messages) }
@@ -50,18 +50,18 @@ local function send_request(messages, adapter_name, model_name, cb)
   client:request(payload, {
     callback = function(err, data, ad)
       if err then
-        logger:error("请求失败: %s", err.stderr or err.message or vim.inspect(err))
-        return cb(err.stderr or err.message or "未知错误")
+        logger:error("Request failed: %s", err.stderr or err.message or vim.inspect(err))
+        return cb(err.stderr or err.message or "Unknown error")
       end
       if not data then
-        return cb("响应为空")
+        return cb("Empty response")
       end
       local result = ad.handlers.chat_output(ad, data)
       if not result or not result.status then
-        return cb("无法解析响应")
+        return cb("Failed to parse response")
       end
       if result.status == "error" then
-        return cb(result.output or "LLM 返回错误")
+        return cb(result.output or "LLM returned error")
       end
       local content = result.output and result.output.content or ""
       if type(content) == "table" then
@@ -79,11 +79,11 @@ end
 
 local function output_result(translated)
   local cfg = get_config()
-  -- 只打印翻译结果
+  -- Only print translation result
   print(translated)
   if cfg.output.copy_to_clipboard then
     vim.fn.setreg("+", translated)
-    utils.notify("已复制到剪贴板", vim.log.levels.INFO, "Translator")
+    utils.notify("Copied to clipboard", vim.log.levels.INFO, "Translator")
   end
 end
 
@@ -92,13 +92,13 @@ function M.translate_visual(opts)
   local cfg = get_config()
   local logger = get_logger()
 
-  -- 严格获取可视选区；若无选区则使用原函数（保持向后兼容）
+  -- Strictly get visual selection; use original function if no selection (maintain backward compatibility)
   local text, start_line, end_line = utils.get_strict_visual_selection()
   if text then
-    logger:debug("获取选区文本: 第 %d-%d 行", start_line, end_line)
+    logger:debug("Got selection text: lines %d-%d", start_line, end_line)
   else
     text, start_line, end_line = utils.get_visual_selection()
-    logger:debug("无严格选区，退回通用获取: 第 %d-%d 行", start_line, end_line)
+    logger:debug("No strict selection, falling back to general: lines %d-%d", start_line, end_line)
   end
 
   local target = opts.target_lang or cfg.default_target_lang
@@ -108,7 +108,7 @@ function M.translate_visual(opts)
 
   send_request(messages, adapter, model, function(err, translated)
     if err then
-      return utils.notify("翻译失败: " .. err, vim.log.levels.ERROR, "Translator")
+      return utils.notify("Translation failed: " .. err, vim.log.levels.ERROR, "Translator")
     end
     output_result(translated)
   end)
