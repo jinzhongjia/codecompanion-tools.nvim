@@ -29,7 +29,8 @@ function Logger:should_log(level)
   if not self.config.enabled then
     return false
   end
-  return level_map[level] >= level_map[self.config.log_level]
+  local configured_level = level_map[self.config.log_level] or level_map.INFO
+  return level_map[level] >= configured_level
 end
 
 function Logger:write(level, msg)
