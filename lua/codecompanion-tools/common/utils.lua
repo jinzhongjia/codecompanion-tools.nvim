@@ -52,13 +52,11 @@ end
 
 -- Strict mode: return nil if no valid visual selection (no fallback to current line)
 function M.get_strict_visual_selection()
-  local ok_start = pcall(vim.fn.getpos, "'<")
-  local ok_end = pcall(vim.fn.getpos, "'>")
+  local ok_start, ps = pcall(vim.fn.getpos, "'<")
+  local ok_end, pe = pcall(vim.fn.getpos, "'>")
   if not ok_start or not ok_end then
     return nil
   end
-  local ps = vim.fn.getpos("'<")
-  local pe = vim.fn.getpos("'>")
   local sline, scol = ps[2], ps[3]
   local eline, ecol = pe[2], pe[3]
   if sline == 0 or eline == 0 then
