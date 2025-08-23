@@ -47,7 +47,7 @@ function Logger:write(level, msg)
   vim.uv.fs_open(self.path, "a", 438, function(err, fd) -- 438 = 0666 in octal
     if err then
       vim.schedule(function()
-        vim.notify("Failed to open log file: " .. err, vim.log.levels.ERROR)
+        vim.notify("Failed to open log file: " .. (err.message or tostring(err)), vim.log.levels.ERROR)
       end)
       return
     end
@@ -56,7 +56,7 @@ function Logger:write(level, msg)
     vim.uv.fs_write(fd, data, -1, function(write_err)
       if write_err then
         vim.schedule(function()
-          vim.notify("Failed to write to log file: " .. write_err, vim.log.levels.ERROR)
+          vim.notify("Failed to write to log file: " .. (write_err.message or tostring(write_err)), vim.log.levels.ERROR)
         end)
       end
       vim.uv.fs_close(fd)
@@ -96,7 +96,7 @@ function Logger:clear()
   vim.uv.fs_open(self.path, "w", 438, function(err, fd) -- 438 = 0666 in octal
     if err then
       vim.schedule(function()
-        vim.notify("Failed to open log file for clearing: " .. err, vim.log.levels.ERROR)
+        vim.notify("Failed to open log file for clearing: " .. (err.message or tostring(err)), vim.log.levels.ERROR)
       end)
       return
     end
@@ -105,7 +105,7 @@ function Logger:clear()
     vim.uv.fs_write(fd, "", 0, function(write_err)
       if write_err then
         vim.schedule(function()
-          vim.notify("Failed to clear log file: " .. write_err, vim.log.levels.ERROR)
+          vim.notify("Failed to clear log file: " .. (write_err.message or tostring(write_err)), vim.log.levels.ERROR)
         end)
       end
       vim.uv.fs_close(fd)
