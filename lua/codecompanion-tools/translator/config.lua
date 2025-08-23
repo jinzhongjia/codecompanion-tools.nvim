@@ -37,13 +37,6 @@ M.opts = vim.deepcopy(defaults)
 
 function M.setup(user)
   user = user or {}
-  -- 兼容旧文档字段/别名
-  if user.default_adapter and user.adapter == nil then
-    user.adapter = user.default_adapter
-  end
-  if user.default_model and user.model == nil then
-    user.model = user.default_model
-  end
   M.opts = vim.tbl_deep_extend("force", defaults, user)
 end
 

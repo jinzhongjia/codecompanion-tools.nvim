@@ -63,7 +63,7 @@ end
 
 -- 健康检查
 function M.health()
-  local health = vim.health or require("health")
+  local health = vim.health
 
   health.start("CodeCompanion Tools")
 
