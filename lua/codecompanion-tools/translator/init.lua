@@ -15,13 +15,13 @@ function M.create_commands()
     local target = args[1]
     if not target or target == "" or not config.opts.languages[target] then
       target = cfg.default_target_lang
-      -- 不再提示默认语言，保持输出纯净
+      -- No longer prompt default language, keep output clean
     end
     core.translate_visual({ target_lang = target })
   end, {
     range = true,
     nargs = "?",
-    desc = "翻译选中的文本 (可选: 语言)",
+    desc = "Translate selected text (optional: language)",
     complete = function(ArgLead)
       local lang_keys = {}
       for k, _ in pairs(config.opts.languages) do
@@ -46,12 +46,12 @@ function M.create_commands()
     local sub = cmd.args
     if sub == "clear" then
       logger.clear()
-      return utils.notify("日志已清空", vim.log.levels.INFO, "Translator")
+      return utils.notify("Logs cleared", vim.log.levels.INFO, "Translator")
     end
     logger.open()
   end, {
     nargs = "?",
-    desc = "查看或清空翻译日志",
+    desc = "View or clear translator logs",
     complete = function(ArgLead)
       local opts = { "clear" }
       local out = {}

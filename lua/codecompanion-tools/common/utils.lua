@@ -1,13 +1,13 @@
--- 通用工具函数
+-- Common utility functions
 local M = {}
 
--- 获取选中的文本
+-- Get selected text
 function M.get_visual_selection()
   local bufnr = vim.api.nvim_get_current_buf()
   local pos_start = vim.fn.getpos("'<")
   local pos_end = vim.fn.getpos("'>")
 
-  -- 无有效可视选区时退回当前行
+  -- Fall back to current line when no valid visual selection
   if pos_start[2] == 0 or pos_end[2] == 0 then
     local l = vim.fn.line(".")
     local line = vim.api.nvim_buf_get_lines(bufnr, l - 1, l, false)[1] or ""
@@ -17,7 +17,7 @@ function M.get_visual_selection()
   local sline, scol = pos_start[2], pos_start[3]
   local eline, ecol = pos_end[2], pos_end[3]
   if (eline < sline) or (eline == sline and ecol < scol) then
-    -- 交换，保证 (sline,scol) 在前
+    -- Swap to ensure (sline,scol) comes first
     sline, eline = eline, sline
     scol, ecol = ecol, scol
   end
@@ -26,18 +26,18 @@ function M.get_visual_selection()
   local vmode = vim.fn.visualmode() or ""
 
   if vmode == "V" then
-    -- 行可视：整行直接返回
+    -- Line visual: return entire lines
     return table.concat(lines, "\n"), sline, eline
-  elseif vmode == "\22" then -- 块可视 (CTRL-V)
+  elseif vmode == "\22" then -- Block visual (CTRL-V)
     local min_col = math.min(scol, ecol)
     local max_col = math.max(scol, ecol)
     for i, l in ipairs(lines) do
-      -- sub 的结束是包含的，因此直接 max_col
+      -- sub's end is inclusive, so use max_col directly
       lines[i] = l:sub(min_col, max_col)
     end
     return table.concat(lines, "\n"), sline, eline
   else
-    -- 字符可视：裁剪首尾行列；注意 ecol 需包含
+    -- Character visual: trim first and last lines; note ecol should be included
     if #lines > 0 then
       lines[1] = lines[1]:sub(scol)
       if #lines == 1 then
@@ -50,7 +50,7 @@ function M.get_visual_selection()
   end
 end
 
--- 严格模式：若没有有效可视选区，返回 nil（不回退到当前行）
+-- Strict mode: return nil if no valid visual selection (no fallback to current line)
 function M.get_strict_visual_selection()
   local ok_start = pcall(vim.fn.getpos, "'<")
   local ok_end = pcall(vim.fn.getpos, "'>")
@@ -98,19 +98,19 @@ function M.get_strict_visual_selection()
   end
 end
 
--- 安全的深度合并配置
+-- Safe deep merge configuration
 function M.merge_config(defaults, user)
   user = user or {}
   return vim.tbl_deep_extend("force", defaults, user)
 end
 
--- 创建用户命令的辅助函数
+-- Helper function to create user commands
 function M.create_command(name, handler, opts)
   opts = opts or {}
   vim.api.nvim_create_user_command(name, handler, opts)
 end
 
--- 通知用户的辅助函数
+-- Helper function to notify users
 function M.notify(msg, level, title)
   vim.schedule(function()
     vim.notify(msg, level or vim.log.levels.INFO, {
@@ -120,7 +120,7 @@ function M.notify(msg, level, title)
   end)
 end
 
--- 检查 CodeCompanion 是否可用
+-- Check if CodeCompanion is available
 function M.check_codecompanion()
   local ok = pcall(require, "codecompanion")
   if not ok then

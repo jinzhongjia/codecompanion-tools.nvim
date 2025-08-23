@@ -1,6 +1,6 @@
 require("codecompanion-tools").setup({
   translator = {
-    adapter = "anthropic", -- 覆盖默认适配器 (可选)
+    adapter = "anthropic", -- Override default adapter (optional)
     default_target_lang = "zh",
     debug = {
       enabled = true,

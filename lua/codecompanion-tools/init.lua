@@ -1,13 +1,13 @@
 local M = {}
 
 ---@class CodeCompanionToolsConfig
----@field translator table|nil 翻译模块配置
----@field modules table<string, boolean|table> 模块启用状态和配置
+---@field translator table|nil Translator module configuration
+---@field modules table<string, boolean|table> Module enable status and configuration
 
--- 可用的模块列表
+-- Available modules list
 local available_modules = {
   translator = "codecompanion-tools.translator",
-  -- 未来可以添加更多模块，例如:
+  -- Future modules can be added, for example:
   -- formatter = "codecompanion-tools.formatter",
   -- refactor = "codecompanion-tools.refactor",
   -- docgen = "codecompanion-tools.docgen",
@@ -18,26 +18,26 @@ local available_modules = {
 function M.setup(opts)
   opts = opts or {}
 
-  -- 检查 CodeCompanion 是否可用
+  -- Check if CodeCompanion is available
   local utils = require("codecompanion-tools.common.utils")
   if not utils.check_codecompanion() then
     return
   end
 
-  -- 加载各个模块
+  -- Load each module
   for module_name, module_path in pairs(available_modules) do
     local module_config = opts[module_name]
 
-    -- 如果模块配置不是 false，则加载模块
+    -- Load module if configuration is not false
     if module_config ~= false then
       local ok, module = pcall(require, module_path)
       if ok then
-        -- 如果配置是 true 或 nil，使用默认配置
-        -- 如果配置是 table，使用用户配置
+        -- Use default config if configuration is true or nil
+        -- Use user config if configuration is table
         local config = (type(module_config) == "table") and module_config or {}
         module.setup(config)
 
-        -- 记录已加载的模块
+        -- Record loaded modules
         M[module_name] = module
       else
         vim.notify(
@@ -50,7 +50,7 @@ function M.setup(opts)
   end
 end
 
--- 获取已加载的模块列表
+-- Get list of loaded modules
 function M.loaded_modules()
   local modules = {}
   for name, _ in pairs(available_modules) do
@@ -61,13 +61,13 @@ function M.loaded_modules()
   return modules
 end
 
--- 健康检查
+-- Health check
 function M.health()
   local health = vim.health
 
   health.start("CodeCompanion Tools")
 
-  -- 检查 CodeCompanion
+  -- Check CodeCompanion
   local cc_ok = pcall(require, "codecompanion")
   if cc_ok then
     health.ok("CodeCompanion is installed")
@@ -76,7 +76,7 @@ function M.health()
     return
   end
 
-  -- 检查已加载的模块
+  -- Check loaded modules
   local loaded = M.loaded_modules()
   if #loaded > 0 then
     health.ok(string.format("Loaded modules: %s", table.concat(loaded, ", ")))

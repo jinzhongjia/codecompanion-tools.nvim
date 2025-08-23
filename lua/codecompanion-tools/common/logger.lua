@@ -1,8 +1,8 @@
--- 通用日志模块，供所有工具使用
+-- Common logger module for all tools
 local M = {}
 
 local function get_log_path(module_name)
-  -- 使用 vim.fs.joinpath 确保跨平台兼容性
+  -- Use vim.fs.joinpath for cross-platform compatibility
   local state_dir = vim.fn.stdpath("state")
   local log_file = "codecompanion_" .. module_name .. ".log"
   return vim.fs.joinpath(state_dir, log_file)
@@ -35,13 +35,13 @@ end
 function Logger:write(level, msg)
   local line =
     string.format("[%s] [%s] %s %s", self.module_name:upper(), level, os.date("%H:%M:%S"), msg)
-  
-  -- 确保日志目录存在（Windows 兼容）
+
+  -- Ensure log directory exists (Windows compatible)
   local log_dir = vim.fn.fnamemodify(self.path, ":h")
   if vim.fn.isdirectory(log_dir) == 0 then
     vim.fn.mkdir(log_dir, "p")
   end
-  
+
   local fd = io.open(self.path, "a")
   if fd then
     fd:write(line .. "\n")
@@ -84,7 +84,7 @@ function Logger:clear()
   end
 end
 
--- 工厂函数
+-- Factory function
 function M.create(module_name, config)
   return Logger:new(module_name, config)
 end

@@ -1,4 +1,4 @@
--- Translator 模块的 logger 实例
+-- Logger instance for Translator module
 local logger_factory = require("codecompanion-tools.common.logger")
 local cfg = require("codecompanion-tools.translator.config").opts
 

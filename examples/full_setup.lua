@@ -1,25 +1,25 @@
--- CodeCompanion Tools 完整配置示例
+-- CodeCompanion Tools Full Configuration Example
 
 require("codecompanion-tools").setup({
-  -- 翻译模块
+  -- Translator module
   translator = {
-    adapter = nil, -- nil 使用 CodeCompanion 默认适配器
-    default_target_lang = "zh", -- 默认目标语言
+    adapter = nil, -- nil uses CodeCompanion default adapter
+    default_target_lang = "zh", -- Default target language
     debug = {
-      enabled = false, -- 生产环境建议关闭
+      enabled = false, -- Recommended to disable in production
       log_level = "INFO", -- DEBUG|INFO|WARN|ERROR
     },
     output = {
       notification_timeout = 3000,
       copy_to_clipboard = false,
     },
-    -- 自定义提示词（可选）
+    -- Custom prompt (optional)
     prompt = {
       system = [[You are a professional translator. Translate the following content into %s.
 Keep code blocks, technical terms, and formatting unchanged.
 Return only the translated text without any explanation.]],
     },
-    -- 支持的语言（可扩展）
+    -- Supported languages (extensible)
     languages = {
       zh = "Chinese",
       en = "English",
@@ -32,18 +32,18 @@ Return only the translated text without any explanation.]],
     },
   },
 
-  -- 未来的模块示例（当前未实现）
-  -- formatter = false,  -- 禁用格式化模块
-  -- refactor = {        -- 重构模块配置
+  -- Future module examples (not implemented yet)
+  -- formatter = false,  -- Disable formatter module
+  -- refactor = {        -- Refactor module configuration
   --   ...
   -- }
 })
 
--- 键位映射示例
-vim.keymap.set("v", "<leader>te", ":CCTranslate en<CR>", { desc = "翻译为英文" })
-vim.keymap.set("v", "<leader>tz", ":CCTranslate zh<CR>", { desc = "翻译为中文" })
-vim.keymap.set("v", "<leader>tj", ":CCTranslate ja<CR>", { desc = "翻译为日文" })
+-- Keymap examples
+vim.keymap.set("v", "<leader>te", ":CCTranslate en<CR>", { desc = "Translate to English" })
+vim.keymap.set("v", "<leader>tz", ":CCTranslate zh<CR>", { desc = "Translate to Chinese" })
+vim.keymap.set("v", "<leader>tj", ":CCTranslate ja<CR>", { desc = "Translate to Japanese" })
 
--- 查看日志
-vim.keymap.set("n", "<leader>tl", ":CCTranslatorLog<CR>", { desc = "查看翻译日志" })
-vim.keymap.set("n", "<leader>tc", ":CCTranslatorLog clear<CR>", { desc = "清空翻译日志" })
+-- View logs
+vim.keymap.set("n", "<leader>tl", ":CCTranslatorLog<CR>", { desc = "View translator logs" })
+vim.keymap.set("n", "<leader>tc", ":CCTranslatorLog clear<CR>", { desc = "Clear translator logs" })
