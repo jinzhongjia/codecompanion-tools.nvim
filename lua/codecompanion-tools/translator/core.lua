@@ -27,7 +27,9 @@ local function send_request(messages, adapter_name, model_name, cb)
   local schema = require("codecompanion.schema")
   local logger = get_logger()
 
-  adapter_name = adapter_name or cc_config.strategies.chat.adapter
+  -- COMPAT: v18 renamed strategies -> interactions, remove fallback when dropping v17 support
+  local chat_config = cc_config.interactions and cc_config.interactions.chat or cc_config.strategies.chat
+  adapter_name = adapter_name or chat_config.adapter
   local adapter = adapters.resolve(adapter_name)
   if not adapter then
     return cb("Failed to resolve adapter: " .. tostring(adapter_name))
