@@ -8,6 +8,18 @@ A collection of productivity tools for [CodeCompanion.nvim](https://github.com/o
 
 ## ✨ Features
 
+### 🔐 OAuth Adapters Module
+
+Pre-configured OAuth adapters for popular AI providers, enabling seamless authentication without manual API key management.
+
+- **Anthropic OAuth**: Claude API with extended thinking support
+- **Codex OAuth**: OpenAI Codex/ChatGPT with GPT-5.x models
+- **Gemini OAuth**: Google Gemini Code Assist
+- **Antigravity OAuth**: Google Antigravity with multi-endpoint failover
+- **Cross-Platform**: Works on macOS, Linux, and Windows
+- **Secure**: Uses PKCE flow for OAuth authentication
+- **Token Management**: Automatic token refresh and secure storage
+
 ### 🌐 Translator Module
 
 - **AI-Powered Translation**: Leverages CodeCompanion's AI adapters for accurate translations
@@ -36,6 +48,79 @@ A collection of productivity tools for [CodeCompanion.nvim](https://github.com/o
 ```
 
 ## ⚙️ Configuration
+
+### OAuth Adapters Configuration
+
+Enable OAuth adapters to authenticate with AI providers using browser-based OAuth flow:
+
+```lua
+require("codecompanion-tools").setup({
+  adapters = {
+    -- Enable/disable specific adapters (all enabled by default)
+    anthropic_oauth = true,    -- Anthropic Claude
+    codex_oauth = true,        -- OpenAI Codex/ChatGPT
+    gemini_oauth = true,       -- Google Gemini
+    antigravity_oauth = true,  -- Google Antigravity
+  },
+})
+```
+
+After setup, use the OAuth adapters in CodeCompanion:
+
+```lua
+require("codecompanion").setup({
+  strategies = {
+    chat = {
+      adapter = "anthropic_oauth",  -- or "codex_oauth", "gemini_oauth", "antigravity_oauth"
+    },
+  },
+})
+```
+
+#### OAuth Commands
+
+All adapter operations are managed through a unified command:
+
+```vim
+:CCTools adapter <name> <action>
+```
+
+**Available adapters:** `anthropic`, `codex`, `gemini`, `antigravity`
+
+**Available actions:**
+| Action | Description |
+|--------|-------------|
+| `auth` | Setup OAuth authentication |
+| `status` | Check authentication status |
+| `clear` | Clear stored tokens |
+| `instructions` | Update system instructions (codex only) |
+
+**Examples:**
+
+```vim
+" Setup Anthropic OAuth
+:CCTools adapter anthropic auth
+
+" Check Codex status
+:CCTools adapter codex status
+
+" Clear Gemini tokens
+:CCTools adapter gemini clear
+
+" Update Codex instructions
+:CCTools adapter codex instructions
+```
+
+#### OAuth Flow
+
+1. Run `:CCTools adapter <name> auth` (e.g., `:CCTools adapter anthropic auth`)
+2. A browser window opens for authentication
+3. After authorization, tokens are automatically saved
+4. Use the adapter in CodeCompanion
+
+Tokens are stored securely at `~/.local/share/nvim/` and are automatically refreshed when expired.
+
+### Translator Configuration
 
 ### Default Configuration
 
@@ -201,6 +286,7 @@ require("codecompanion-tools").setup(opts)
 **Parameters:**
 
 - `opts` (table): Configuration options
+  - `adapters` (table|false): OAuth adapters configuration. Set to `false` to disable all adapters.
   - `translator` (table|false): Translator module configuration. Set to `false` to disable.
 
 ### Translator Module API
@@ -294,7 +380,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ ] Support for translation history
 - [ ] Batch file translation
 - [ ] Custom language detection
-- [ ] Integration with more AI providers
+- [ ] Additional OAuth adapters for more AI providers
 - [ ] Translation quality feedback system
 
 ---

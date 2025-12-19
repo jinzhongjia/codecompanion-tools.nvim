@@ -2,6 +2,7 @@ local M = {}
 
 ---@class CodeCompanionToolsConfig
 ---@field translator? table|boolean Configuration for the translator module. Can be a config table, `true` to enable with defaults, or `false` to disable
+---@field adapters? table|boolean Configuration for the adapters module. Can be a config table, `true` to enable with defaults, or `false` to disable
 --- Future modules can be added as top-level fields, for example:
 --- @field formatter? table|boolean Configuration for the formatter module
 --- @field refactor? table|boolean Configuration for the refactor module
@@ -10,6 +11,7 @@ local M = {}
 -- Available modules list
 local available_modules = {
   translator = "codecompanion-tools.translator",
+  adapters = "codecompanion-tools.adapters",
   -- Future modules can be added, for example:
   -- formatter = "codecompanion-tools.formatter",
   -- refactor = "codecompanion-tools.refactor",
@@ -85,6 +87,14 @@ function M.health()
     health.ok(string.format("Loaded modules: %s", table.concat(loaded, ", ")))
   else
     health.warn("No modules loaded")
+  end
+
+  -- Check adapters module
+  if M.adapters then
+    local adapter_names = M.adapters.loaded_adapter_names()
+    if #adapter_names > 0 then
+      health.ok(string.format("Loaded adapters: %s", table.concat(adapter_names, ", ")))
+    end
   end
 end
 

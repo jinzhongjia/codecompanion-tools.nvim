@@ -8,6 +8,18 @@
 
 ## ✨ 功能特性
 
+### 🔐 OAuth 适配器模块
+
+为主流 AI 提供商预配置的 OAuth 适配器，无需手动管理 API 密钥即可实现无缝认证。
+
+- **Anthropic OAuth**：支持扩展思考的 Claude API
+- **Codex OAuth**：支持 GPT-5.x 模型的 OpenAI Codex/ChatGPT
+- **Gemini OAuth**：Google Gemini Code Assist
+- **Antigravity OAuth**：支持多端点故障转移的 Google Antigravity
+- **跨平台支持**：适用于 macOS、Linux 和 Windows
+- **安全认证**：使用 PKCE 流程进行 OAuth 认证
+- **令牌管理**：自动刷新令牌和安全存储
+
 ### 🌐 翻译器模块
 
 - **AI 驱动翻译**：利用 CodeCompanion 的 AI 适配器实现精准翻译
@@ -36,6 +48,79 @@
 ```
 
 ## ⚙️ 配置
+
+### OAuth 适配器配置
+
+启用 OAuth 适配器，通过浏览器 OAuth 流程与 AI 提供商进行认证：
+
+```lua
+require("codecompanion-tools").setup({
+  adapters = {
+    -- 启用/禁用特定适配器（默认全部启用）
+    anthropic_oauth = true,    -- Anthropic Claude
+    codex_oauth = true,        -- OpenAI Codex/ChatGPT
+    gemini_oauth = true,       -- Google Gemini
+    antigravity_oauth = true,  -- Google Antigravity
+  },
+})
+```
+
+设置完成后，在 CodeCompanion 中使用 OAuth 适配器：
+
+```lua
+require("codecompanion").setup({
+  strategies = {
+    chat = {
+      adapter = "anthropic_oauth",  -- 或 "codex_oauth", "gemini_oauth", "antigravity_oauth"
+    },
+  },
+})
+```
+
+#### OAuth 命令
+
+所有适配器操作通过统一命令管理：
+
+```vim
+:CCTools adapter <名称> <操作>
+```
+
+**可用适配器：** `anthropic`, `codex`, `gemini`, `antigravity`
+
+**可用操作：**
+| 操作 | 描述 |
+|------|------|
+| `auth` | 设置 OAuth 认证 |
+| `status` | 检查认证状态 |
+| `clear` | 清除存储的令牌 |
+| `instructions` | 更新系统指令（仅 codex） |
+
+**示例：**
+
+```vim
+" 设置 Anthropic OAuth
+:CCTools adapter anthropic auth
+
+" 检查 Codex 状态
+:CCTools adapter codex status
+
+" 清除 Gemini 令牌
+:CCTools adapter gemini clear
+
+" 更新 Codex 指令
+:CCTools adapter codex instructions
+```
+
+#### OAuth 流程
+
+1. 运行 `:CCTools adapter <名称> auth`（例如 `:CCTools adapter anthropic auth`）
+2. 浏览器窗口打开进行认证
+3. 授权后，令牌自动保存
+4. 在 CodeCompanion 中使用适配器
+
+令牌安全存储在 `~/.local/share/nvim/`，过期时自动刷新。
+
+### 翻译器配置
 
 ### 默认配置
 
@@ -201,6 +286,7 @@ require("codecompanion-tools").setup(opts)
 **参数：**
 
 - `opts` (table): 配置选项
+  - `adapters` (table|false): OAuth 适配器配置。设置为 `false` 可禁用所有适配器。
   - `translator` (table|false): 翻译器模块配置。设置为 `false` 可禁用。
 
 ### 翻译器模块 API
@@ -294,7 +380,7 @@ require("codecompanion-tools").setup({
 - [ ] 支持翻译历史记录
 - [ ] 批量文件翻译
 - [ ] 自定义语言检测
-- [ ] 集成更多 AI 提供商
+- [ ] 为更多 AI 提供商添加 OAuth 适配器
 - [ ] 翻译质量反馈系统
 
 ---
