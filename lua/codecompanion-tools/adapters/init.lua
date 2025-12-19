@@ -258,7 +258,7 @@ function M.setup(opts)
         local adapter = adapter_module.create_adapter()
         if adapter then
           -- Register the adapter in CodeCompanion's adapter list
-          cc_config.adapters[adapter.name] = function()
+          cc_config.adapters.http[adapter.name] = function()
             return adapter
           end
 
