@@ -639,15 +639,26 @@ function M.create_adapter()
           api_model = "gpt-5.1"
         end
 
-        local instructions = codex_instructions.INSTRUCTIONS
+        -- Add system instructions as developer message at the beginning of input
+        -- (Codex API requires instructions field to contain only the original Codex system prompt)
         if #system_instructions > 0 then
-          instructions = table.concat(system_instructions, "\n") .. "\n\n" .. instructions
+          local developer_message = {
+            type = "message",
+            role = "developer",
+            content = {
+              {
+                type = "input_text",
+                text = table.concat(system_instructions, "\n"),
+              },
+            },
+          }
+          table.insert(input, 1, developer_message)
         end
 
         local body = {
           model = api_model,
           input = input,
-          instructions = instructions,
+          instructions = codex_instructions.INSTRUCTIONS,
           store = false,
           stream = true,
         }
