@@ -32,6 +32,16 @@ Return only the translated text without any explanation.]],
     },
   },
 
+  -- OAuth Adapters module
+  adapters = {
+    -- All adapters are enabled by default
+    -- Set to false to disable specific adapters
+    anthropic_oauth = true,    -- Anthropic Claude OAuth adapter
+    codex_oauth = true,        -- OpenAI Codex (ChatGPT) OAuth adapter
+    gemini_oauth = true,       -- Google Gemini OAuth adapter
+    antigravity_oauth = true,  -- Google Antigravity OAuth adapter
+  },
+
   -- Future module examples (not implemented yet)
   -- formatter = false,  -- Disable formatter module
   -- refactor = {        -- Refactor module configuration
@@ -39,7 +49,9 @@ Return only the translated text without any explanation.]],
   -- }
 })
 
--- Keymap examples
+-- ============================================================================
+-- Translator Keymap Examples
+-- ============================================================================
 vim.keymap.set("v", "<leader>te", ":CCTranslate en<CR>", { desc = "Translate to English" })
 vim.keymap.set("v", "<leader>tz", ":CCTranslate zh<CR>", { desc = "Translate to Chinese" })
 vim.keymap.set("v", "<leader>tj", ":CCTranslate ja<CR>", { desc = "Translate to Japanese" })
@@ -47,3 +59,34 @@ vim.keymap.set("v", "<leader>tj", ":CCTranslate ja<CR>", { desc = "Translate to 
 -- View logs
 vim.keymap.set("n", "<leader>tl", ":CCTranslatorLog<CR>", { desc = "View translator logs" })
 vim.keymap.set("n", "<leader>tc", ":CCTranslatorLog clear<CR>", { desc = "Clear translator logs" })
+
+-- ============================================================================
+-- OAuth Adapter Usage Examples
+-- ============================================================================
+-- After setup, you can use the OAuth adapters in CodeCompanion:
+--
+-- require("codecompanion").setup({
+--   strategies = {
+--     chat = {
+--       adapter = "anthropic_oauth",  -- or codex_oauth, gemini_oauth, antigravity_oauth
+--     },
+--   },
+-- })
+--
+-- Available OAuth Commands:
+--   :AnthropicOAuthSetup   - Setup Anthropic OAuth authentication
+--   :AnthropicOAuthStatus  - Check Anthropic OAuth status
+--   :AnthropicOAuthClear   - Clear Anthropic OAuth credentials
+--
+--   :CodexOAuthSetup       - Setup Codex (ChatGPT) OAuth authentication
+--   :CodexOAuthStatus      - Check Codex OAuth status
+--   :CodexOAuthClear       - Clear Codex OAuth credentials
+--   :CodexUpdateInstructions - Update Codex system instructions from GitHub
+--
+--   :GeminiOAuthSetup      - Setup Gemini OAuth authentication
+--   :GeminiOAuthStatus     - Check Gemini OAuth status
+--   :GeminiOAuthClear      - Clear Gemini OAuth credentials
+--
+--   :AntigravityOAuthSetup - Setup Antigravity OAuth authentication
+--   :AntigravityOAuthStatus - Check Antigravity OAuth status
+--   :AntigravityOAuthClear  - Clear Antigravity OAuth credentials
