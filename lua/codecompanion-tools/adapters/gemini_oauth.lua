@@ -843,33 +843,40 @@ function M.create_adapter()
         default = "gemini-2.5-flash",
         choices = {
           ["gemini-3-pro-preview"] = {
-            formatted_name = "Gemini 3 Pro",
-            opts = { can_reason = true, has_vision = true, thinking_level = "high" },
+            formatted_name = "Gemini 3 Pro (1M context)",
+            opts = { can_reason = true, has_vision = true, thinking_level = "high", context_window = 1000000, max_output = 64000 },
           },
-          ["gemini-3-flash"] = {
-            formatted_name = "Gemini 3 Flash",
-            opts = { can_reason = true, has_vision = true, thinking_level = "low" },
+          ["gemini-3-flash-preview"] = {
+            formatted_name = "Gemini 3 Flash (1M context)",
+            opts = { can_reason = true, has_vision = true, thinking_level = "low", context_window = 1048576, max_output = 65536 },
           },
           ["gemini-2.5-pro"] = {
-            formatted_name = "Gemini 2.5 Pro",
-            opts = { can_reason = true, has_vision = true, thinking_budget = 16384 },
+            formatted_name = "Gemini 2.5 Pro (1M context)",
+            opts = { can_reason = true, has_vision = true, thinking_budget = 16384, context_window = 1048576, max_output = 65536 },
           },
           ["gemini-2.5-flash"] = {
-            formatted_name = "Gemini 2.5 Flash",
-            opts = { can_reason = true, has_vision = true, thinking_budget = 8192 },
+            formatted_name = "Gemini 2.5 Flash (1M context)",
+            opts = { can_reason = true, has_vision = true, thinking_budget = 8192, context_window = 1048576, max_output = 65536 },
+          },
+          ["gemini-2.5-flash-lite"] = {
+            formatted_name = "Gemini 2.5 Flash Lite (1M context)",
+            opts = { can_reason = true, has_vision = true, thinking_budget = 4096, context_window = 1048576, max_output = 65536 },
           },
           ["gemini-2.0-flash"] = {
-            formatted_name = "Gemini 2.0 Flash",
-            opts = { has_vision = true },
+            formatted_name = "Gemini 2.0 Flash (1M context)",
+            opts = { has_vision = true, context_window = 1048576, max_output = 8192 },
           },
           ["gemini-2.0-flash-lite"] = {
-            formatted_name = "Gemini 2.0 Flash Lite",
-            opts = { has_vision = true },
+            formatted_name = "Gemini 2.0 Flash Lite (1M context)",
+            opts = { has_vision = true, context_window = 1048576, max_output = 8192 },
           },
-          ["gemini-1.5-pro"] = { formatted_name = "Gemini 1.5 Pro", opts = { has_vision = true } },
+          ["gemini-1.5-pro"] = {
+            formatted_name = "Gemini 1.5 Pro (1M context)",
+            opts = { has_vision = true, context_window = 1000000, max_output = 8192 },
+          },
           ["gemini-1.5-flash"] = {
-            formatted_name = "Gemini 1.5 Flash",
-            opts = { has_vision = true },
+            formatted_name = "Gemini 1.5 Flash (1M context)",
+            opts = { has_vision = true, context_window = 1000000, max_output = 8192 },
           },
         },
       },
