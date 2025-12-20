@@ -2,6 +2,7 @@
 
 local M = {}
 
+local uv = vim.uv or vim.loop
 local _seeded = false
 
 ---Trim whitespace from string
@@ -66,7 +67,6 @@ end
 ---@return string
 function M.secure_random_bytes(length)
   if not _seeded then
-    local uv = vim.uv or vim.loop
     local seed = os.time() * 1000 + (uv and uv.hrtime() % 1000000 or 0) + (vim.fn.getpid() or 0)
     math.randomseed(seed)
     _seeded = true
