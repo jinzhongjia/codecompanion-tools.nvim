@@ -14,7 +14,6 @@ Pre-configured OAuth adapters for popular AI providers, enabling seamless authen
 
 - **Anthropic OAuth**: Claude API with extended thinking support
 - **Codex OAuth**: OpenAI Codex/ChatGPT with GPT-5.x models
-- **Gemini OAuth**: Google Gemini Code Assist
 - **Antigravity OAuth**: Google Antigravity with multi-endpoint failover
 - **Cross-Platform**: Works on macOS, Linux, and Windows
 - **Secure**: Uses PKCE flow for OAuth authentication
@@ -59,7 +58,6 @@ require("codecompanion-tools").setup({
     -- Enable/disable specific adapters (all enabled by default)
     anthropic_oauth = true,    -- Anthropic Claude
     codex_oauth = true,        -- OpenAI Codex/ChatGPT
-    gemini_oauth = true,       -- Google Gemini
     antigravity_oauth = true,  -- Google Antigravity
   },
 })
@@ -71,7 +69,7 @@ After setup, use the OAuth adapters in CodeCompanion:
 require("codecompanion").setup({
   strategies = {
     chat = {
-      adapter = "anthropic_oauth",  -- or "codex_oauth", "gemini_oauth", "antigravity_oauth"
+      adapter = "anthropic_oauth",  -- or "codex_oauth", "antigravity_oauth"
     },
   },
 })
@@ -85,7 +83,7 @@ All adapter operations are managed through a unified command:
 :CCTools adapter <name> <action>
 ```
 
-**Available adapters:** `anthropic`, `codex`, `gemini`, `antigravity`
+**Available adapters:** `anthropic`, `codex`, `antigravity`
 
 **Available actions:**
 | Action | Description |
@@ -103,9 +101,6 @@ All adapter operations are managed through a unified command:
 
 " Check Codex status
 :CCTools adapter codex status
-
-" Clear Gemini tokens
-:CCTools adapter gemini clear
 
 " Update Codex instructions
 :CCTools adapter codex instructions

@@ -6,7 +6,6 @@ local M = {}
 ---@class AdaptersConfig
 ---@field anthropic_oauth? table|boolean Configuration for Anthropic OAuth adapter
 ---@field codex_oauth? table|boolean Configuration for Codex (ChatGPT) OAuth adapter
----@field gemini_oauth? table|boolean Configuration for Gemini OAuth adapter
 ---@field antigravity_oauth? table|boolean Configuration for Antigravity OAuth adapter
 
 -- Available adapters with short names for commands
@@ -20,11 +19,6 @@ local available_adapters = {
     path = "codecompanion-tools.adapters.codex_oauth",
     short_name = "codex",
     display_name = "Codex",
-  },
-  gemini_oauth = {
-    path = "codecompanion-tools.adapters.gemini_oauth",
-    short_name = "gemini",
-    display_name = "Gemini",
   },
   antigravity_oauth = {
     path = "codecompanion-tools.adapters.antigravity_oauth",
@@ -85,7 +79,7 @@ local function execute_adapter_action(adapter_name, action)
   local module, full_name = get_adapter_module(adapter_name)
   if not module then
     vim.notify(
-      string.format("Unknown adapter: %s\nAvailable: anthropic, codex, gemini, antigravity", adapter_name),
+      string.format("Unknown adapter: %s\nAvailable: anthropic, codex, antigravity", adapter_name),
       vim.log.levels.ERROR,
       { title = "CodeCompanion Tools" }
     )
@@ -138,13 +132,13 @@ local function setup_unified_command()
       -- Show help
       vim.notify(
         "Usage: CCTools adapter <name> <action>\n\n"
-          .. "Adapters: anthropic, codex, gemini, antigravity\n"
+          .. "Adapters: anthropic, codex, antigravity\n"
           .. "Actions: auth, status, clear\n"
           .. "         instructions (codex only)\n\n"
           .. "Examples:\n"
           .. "  :CCTools adapter anthropic auth\n"
           .. "  :CCTools adapter codex status\n"
-          .. "  :CCTools adapter gemini clear",
+          .. "  :CCTools adapter antigravity clear",
         vim.log.levels.INFO,
         { title = "CodeCompanion Tools" }
       )
@@ -157,7 +151,7 @@ local function setup_unified_command()
       if #args < 3 then
         vim.notify(
           "Usage: CCTools adapter <name> <action>\n\n"
-            .. "Adapters: anthropic, codex, gemini, antigravity\n"
+            .. "Adapters: anthropic, codex, antigravity\n"
             .. "Actions: auth, status, clear",
           vim.log.levels.WARN,
           { title = "CodeCompanion Tools" }
@@ -200,7 +194,7 @@ local function setup_unified_command()
       if subcommand == "adapter" then
         -- Completing adapter name
         if n_args == 1 or (n_args == 2 and not cmd_line:match("%s$")) then
-          local adapters = { "anthropic", "codex", "gemini", "antigravity" }
+          local adapters = { "anthropic", "codex", "antigravity" }
           return vim.tbl_filter(function(item)
             return item:find(arg_lead, 1, true) == 1
           end, adapters)

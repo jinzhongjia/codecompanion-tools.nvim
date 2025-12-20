@@ -38,7 +38,6 @@ Return only the translated text without any explanation.]],
     -- Set to false to disable specific adapters
     anthropic_oauth = true,    -- Anthropic Claude OAuth adapter
     codex_oauth = true,        -- OpenAI Codex (ChatGPT) OAuth adapter
-    gemini_oauth = true,       -- Google Gemini OAuth adapter
     antigravity_oauth = true,  -- Google Antigravity OAuth adapter
   },
 
@@ -68,7 +67,7 @@ vim.keymap.set("n", "<leader>tc", ":CCTranslatorLog clear<CR>", { desc = "Clear 
 -- require("codecompanion").setup({
 --   strategies = {
 --     chat = {
---       adapter = "anthropic_oauth",  -- or codex_oauth, gemini_oauth, antigravity_oauth
+--       adapter = "anthropic_oauth",  -- or codex_oauth, antigravity_oauth
 --     },
 --   },
 -- })
@@ -82,10 +81,6 @@ vim.keymap.set("n", "<leader>tc", ":CCTranslatorLog clear<CR>", { desc = "Clear 
 --   :CCTools adapter codex status      - Check Codex OAuth status
 --   :CCTools adapter codex clear       - Clear Codex OAuth credentials
 --   :CCTools adapter codex instructions - Update Codex system instructions from GitHub
---
---   :CCTools adapter gemini auth       - Setup Gemini OAuth authentication
---   :CCTools adapter gemini status     - Check Gemini OAuth status
---   :CCTools adapter gemini clear      - Clear Gemini OAuth credentials
 --
 --   :CCTools adapter antigravity auth  - Setup Antigravity OAuth authentication
 --   :CCTools adapter antigravity status - Check Antigravity OAuth status

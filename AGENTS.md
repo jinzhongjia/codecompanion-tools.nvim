@@ -27,7 +27,6 @@ lua/codecompanion-tools/
 │   ├── anthropic_oauth.lua # Anthropic Claude OAuth adapter
 │   ├── codex_oauth.lua     # OpenAI Codex (ChatGPT) OAuth adapter
 │   ├── codex_instructions.lua # Codex system instructions
-│   ├── gemini_oauth.lua    # Google Gemini OAuth adapter
 │   └── antigravity_oauth.lua # Google Antigravity OAuth adapter
 └── module_template.lua      # Template for new modules
 ```
@@ -44,7 +43,6 @@ Provides OAuth-authenticated adapters for AI services:
 |---------|---------|------------|----------|
 | `anthropic_oauth` | Anthropic Claude | OAuth 2.0 + PKCE | Latest Claude models, extended thinking |
 | `codex_oauth` | OpenAI Codex/ChatGPT | OAuth 2.0 + PKCE | GPT-5.x series, reasoning mode |
-| `gemini_oauth` | Google Gemini | OAuth 2.0 + PKCE | Gemini 3/2.5/2.0/1.5 |
 | `antigravity_oauth` | Google Antigravity | OAuth 2.0 + PKCE | Multi-endpoint failover, Claude/GPT support |
 
 ## Adding a New Module
@@ -130,7 +128,6 @@ require("codecompanion-tools").setup({
     -- Enable all adapters (default)
     anthropic_oauth = true,
     codex_oauth = true,
-    gemini_oauth = true,
     antigravity_oauth = true,
   },
 
@@ -150,7 +147,6 @@ All adapter operations use the unified `:CCTools` command:
 ### Available Adapters
 - `anthropic` - Anthropic Claude
 - `codex` - OpenAI Codex/ChatGPT
-- `gemini` - Google Gemini
 - `antigravity` - Google Antigravity
 
 ### Available Actions
@@ -169,9 +165,6 @@ All adapter operations use the unified `:CCTools` command:
 " Check Codex status
 :CCTools adapter codex status
 
-" Clear Gemini tokens
-:CCTools adapter gemini clear
-
 " Update Codex instructions
 :CCTools adapter codex instructions
 ```
@@ -184,7 +177,7 @@ After setup, use these adapters in your CodeCompanion configuration:
 require("codecompanion").setup({
   strategies = {
     chat = {
-      adapter = "anthropic_oauth",  -- or codex_oauth, gemini_oauth, antigravity_oauth
+      adapter = "anthropic_oauth",  -- or codex_oauth, antigravity_oauth
     },
   },
 })

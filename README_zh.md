@@ -14,7 +14,6 @@
 
 - **Anthropic OAuth**：支持扩展思考的 Claude API
 - **Codex OAuth**：支持 GPT-5.x 模型的 OpenAI Codex/ChatGPT
-- **Gemini OAuth**：Google Gemini Code Assist
 - **Antigravity OAuth**：支持多端点故障转移的 Google Antigravity
 - **跨平台支持**：适用于 macOS、Linux 和 Windows
 - **安全认证**：使用 PKCE 流程进行 OAuth 认证
@@ -59,7 +58,6 @@ require("codecompanion-tools").setup({
     -- 启用/禁用特定适配器（默认全部启用）
     anthropic_oauth = true,    -- Anthropic Claude
     codex_oauth = true,        -- OpenAI Codex/ChatGPT
-    gemini_oauth = true,       -- Google Gemini
     antigravity_oauth = true,  -- Google Antigravity
   },
 })
@@ -71,7 +69,7 @@ require("codecompanion-tools").setup({
 require("codecompanion").setup({
   strategies = {
     chat = {
-      adapter = "anthropic_oauth",  -- 或 "codex_oauth", "gemini_oauth", "antigravity_oauth"
+      adapter = "anthropic_oauth",  -- 或 "codex_oauth", "antigravity_oauth"
     },
   },
 })
@@ -85,7 +83,7 @@ require("codecompanion").setup({
 :CCTools adapter <名称> <操作>
 ```
 
-**可用适配器：** `anthropic`, `codex`, `gemini`, `antigravity`
+**可用适配器：** `anthropic`, `codex`, `antigravity`
 
 **可用操作：**
 | 操作 | 描述 |
@@ -103,9 +101,6 @@ require("codecompanion").setup({
 
 " 检查 Codex 状态
 :CCTools adapter codex status
-
-" 清除 Gemini 令牌
-:CCTools adapter gemini clear
 
 " 更新 Codex 指令
 :CCTools adapter codex instructions
