@@ -1,5 +1,4 @@
 -- Antigravity (Google Cloud Code Assist) OAuth adapter for CodeCompanion
--- Provides OAuth 2.0 + PKCE authentication for Google Antigravity API
 
 local curl = require("plenary.curl")
 local config = require("codecompanion.config")
@@ -8,14 +7,6 @@ local oauth_utils = require("codecompanion-tools.adapters.oauth_utils")
 
 local M = {}
 
--- Module-level token cache
-local _access_token = nil
-local _refresh_token = nil
-local _token_expires = nil
-local _project_id = nil
-local _token_loaded = false
-
--- OAuth flow constant configuration
 local OAUTH_CONFIG = {
   CLIENT_ID = "1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.googleusercontent.com",
   CLIENT_SECRET = "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",
@@ -31,7 +22,7 @@ local OAUTH_CONFIG = {
   },
   CALLBACK_PORT = 51121,
   ACCESS_TOKEN_EXPIRY_BUFFER_MS = 60 * 1000,
-  TOKEN_FILE = "antigravity_oauth.json",
+  ACCOUNTS_FILE = "antigravity_accounts.json",
 }
 
 -- Antigravity API configuration with fallback endpoints
@@ -98,76 +89,164 @@ local SUCCESS_HTML = [[<!DOCTYPE html>
 </body>
 </html>]]
 
----Get OAuth token file path
----@return string|nil
-local function get_token_file_path()
-  return oauth_utils.get_token_file_path(OAUTH_CONFIG.TOKEN_FILE)
+local _accounts = {}
+local _cursor = 0
+local _loaded = false
+
+local function now_ms()
+  return os.time() * 1000
 end
 
----Load tokens from file
----@return boolean
-local function load_tokens()
-  if _token_loaded then
-    return _access_token ~= nil and _refresh_token ~= nil
+local function get_accounts_file_path()
+  return oauth_utils.get_token_file_path(OAUTH_CONFIG.ACCOUNTS_FILE)
+end
+
+local function load_accounts()
+  if _loaded then
+    return #_accounts > 0
   end
+  _loaded = true
 
-  _token_loaded = true
-
-  local token_file = get_token_file_path()
-  if not token_file then
+  local file_path = get_accounts_file_path()
+  if not file_path then
     return false
   end
 
-  local data = oauth_utils.load_json_file(token_file)
-  if data then
-    _access_token = data.access_token
-    _refresh_token = data.refresh_token
-    _token_expires = data.expires
-    _project_id = data.project_id
-    return _refresh_token ~= nil
+  local data = oauth_utils.load_json_file(file_path)
+  if data and data.version == 1 and data.accounts then
+    _accounts = {}
+    for i, acc in ipairs(data.accounts) do
+      if acc.refresh_token and acc.refresh_token ~= "" then
+        table.insert(_accounts, {
+          index = i,
+          email = acc.email,
+          refresh_token = acc.refresh_token,
+          project_id = acc.project_id,
+          access_token = nil,
+          expires = nil,
+          added_at = acc.added_at or now_ms(),
+          last_used = acc.last_used or 0,
+          is_rate_limited = acc.is_rate_limited or false,
+          rate_limit_reset = acc.rate_limit_reset or 0,
+        })
+      end
+    end
+    _cursor = (data.active_index or 0) % math.max(1, #_accounts)
+    return #_accounts > 0
   end
 
   return false
 end
 
----Save tokens to file
----@param access_token string
----@param refresh_token string
----@param expires number
----@param project_id string|nil
----@return boolean
-local function save_tokens(access_token, refresh_token, expires, project_id)
-  if not refresh_token or refresh_token == "" then
-    log:error("Antigravity OAuth: Cannot save without refresh token")
-    return false
-  end
-
-  local token_file = get_token_file_path()
-  if not token_file then
+local function save_accounts()
+  local file_path = get_accounts_file_path()
+  if not file_path then
     return false
   end
 
   local data = {
-    access_token = access_token,
-    refresh_token = refresh_token,
-    expires = expires,
-    project_id = project_id,
-    created_at = os.time(),
     version = 1,
+    accounts = {},
+    active_index = _cursor,
   }
 
-  if oauth_utils.save_json_file(token_file, data) then
-    _access_token = access_token
-    _refresh_token = refresh_token
-    _token_expires = expires
-    _project_id = project_id
-    _token_loaded = true
-    log:info("Antigravity OAuth: Tokens saved successfully")
-    return true
+  for _, acc in ipairs(_accounts) do
+    table.insert(data.accounts, {
+      email = acc.email,
+      refresh_token = acc.refresh_token,
+      project_id = acc.project_id,
+      added_at = acc.added_at,
+      last_used = acc.last_used,
+      is_rate_limited = acc.is_rate_limited,
+      rate_limit_reset = acc.rate_limit_reset,
+    })
   end
 
-  log:error("Antigravity OAuth: Failed to save tokens")
-  return false
+  return oauth_utils.save_json_file(file_path, data)
+end
+
+local function pick_next_account()
+  local total = #_accounts
+  if total == 0 then
+    return nil
+  end
+
+  local now = now_ms()
+
+  for _, acc in ipairs(_accounts) do
+    if acc.is_rate_limited and acc.rate_limit_reset > 0 and now > acc.rate_limit_reset then
+      acc.is_rate_limited = false
+      acc.rate_limit_reset = 0
+    end
+  end
+
+  for i = 0, total - 1 do
+    local idx = ((_cursor + i) % total) + 1
+    local acc = _accounts[idx]
+    if acc and not acc.is_rate_limited then
+      _cursor = idx % total
+      acc.last_used = now
+      return acc
+    end
+  end
+
+  return nil
+end
+
+local function mark_rate_limited(account, retry_after_ms)
+  account.is_rate_limited = true
+  account.rate_limit_reset = now_ms() + (retry_after_ms or 60000)
+  save_accounts()
+end
+
+local function add_account_data(refresh_token, project_id, email)
+  for _, acc in ipairs(_accounts) do
+    if acc.refresh_token == refresh_token then
+      acc.project_id = project_id
+      acc.email = email
+      save_accounts()
+      return acc
+    end
+  end
+
+  local acc = {
+    index = #_accounts + 1,
+    email = email,
+    refresh_token = refresh_token,
+    project_id = project_id,
+    access_token = nil,
+    expires = nil,
+    added_at = now_ms(),
+    last_used = 0,
+    is_rate_limited = false,
+    rate_limit_reset = 0,
+  }
+  table.insert(_accounts, acc)
+  save_accounts()
+  return acc
+end
+
+local function remove_account_by_index(idx)
+  if idx < 1 or idx > #_accounts then
+    return false
+  end
+
+  table.remove(_accounts, idx)
+  for i, acc in ipairs(_accounts) do
+    acc.index = i
+  end
+
+  if #_accounts == 0 then
+    _cursor = 0
+  else
+    if _cursor >= idx then
+      _cursor = _cursor - 1
+    end
+    _cursor = _cursor % #_accounts
+  end
+
+  save_accounts()
+  return true
 end
 
 ---Load managed project from Antigravity API (tries multiple endpoints)
@@ -307,15 +386,12 @@ local function ensure_project_id(access_token)
   return ANTIGRAVITY_CONFIG.DEFAULT_PROJECT_ID
 end
 
----Refresh access token using refresh token
----@return string|nil
-local function refresh_access_token()
-  if not _refresh_token or _refresh_token == "" then
-    log:error("Antigravity OAuth: No refresh token available")
+local function refresh_account_token(account)
+  if not account or not account.refresh_token then
     return nil
   end
 
-  log:debug("Antigravity OAuth: Refreshing access token")
+  log:debug("Antigravity OAuth: Refreshing token for account #%d", account.index)
 
   local http_opts = config.adapters and config.adapters.http and config.adapters.http.opts or {}
 
@@ -325,7 +401,7 @@ local function refresh_access_token()
     },
     body = "grant_type=refresh_token"
       .. "&refresh_token="
-      .. oauth_utils.url_encode(_refresh_token)
+      .. oauth_utils.url_encode(account.refresh_token)
       .. "&client_id="
       .. oauth_utils.url_encode(OAUTH_CONFIG.CLIENT_ID)
       .. "&client_secret="
@@ -339,45 +415,38 @@ local function refresh_access_token()
   })
 
   if not response then
-    log:error("Antigravity OAuth: No response from token refresh request")
     return nil
   end
 
   if response.status >= 400 then
-    log:error(
-      "Antigravity OAuth: Token refresh failed, status %d: %s",
-      response.status,
-      response.body or "no body"
-    )
+    log:error("Antigravity OAuth: Token refresh failed for account #%d, status %d", account.index, response.status)
     local decode_ok, error_data = pcall(vim.json.decode, response.body)
     if decode_ok and error_data and error_data.error == "invalid_grant" then
-      log:warn(
-        "Antigravity OAuth: Refresh token revoked. Please run :AntigravityOAuthSetup to reauthenticate"
-      )
-      _access_token = nil
-      _refresh_token = nil
-      _token_expires = nil
-      _project_id = nil
+      log:warn("Antigravity OAuth: Account #%d refresh token revoked", account.index)
     end
     return nil
   end
 
   local decode_success, token_data = pcall(vim.json.decode, response.body)
   if not decode_success or not token_data or not token_data.access_token then
-    log:error("Antigravity OAuth: Invalid token refresh response")
     return nil
   end
 
   local expires = os.time() * 1000 + (token_data.expires_in or 3600) * 1000
-  local new_refresh = token_data.refresh_token or _refresh_token
-  local project_id = _project_id or ensure_project_id(token_data.access_token)
+  account.access_token = token_data.access_token
+  account.expires = expires
 
-  if save_tokens(token_data.access_token, new_refresh, expires, project_id) then
-    log:debug("Antigravity OAuth: Access token refreshed successfully")
-    return token_data.access_token
+  if token_data.refresh_token then
+    account.refresh_token = token_data.refresh_token
   end
 
-  return nil
+  if not account.project_id then
+    account.project_id = ensure_project_id(token_data.access_token)
+  end
+
+  save_accounts()
+  log:debug("Antigravity OAuth: Token refreshed for account #%d", account.index)
+  return token_data.access_token
 end
 
 ---Exchange authorization code for tokens
@@ -446,12 +515,14 @@ local function exchange_code_for_tokens(code, verifier)
 
   log:debug("Antigravity OAuth: Getting managed project ID")
   local project_id = ensure_project_id(token_data.access_token)
-  if not project_id then
-    log:error("Antigravity OAuth: Failed to get managed project ID")
-    return false
-  end
 
-  return save_tokens(token_data.access_token, token_data.refresh_token, expires, project_id)
+  local account = add_account_data(token_data.refresh_token, project_id, nil)
+  account.access_token = token_data.access_token
+  account.expires = expires
+  save_accounts()
+
+  log:info("Antigravity OAuth: Account added successfully (total: %d)", #_accounts)
+  return true
 end
 
 ---Encode state for OAuth (base64url)
@@ -494,30 +565,38 @@ local function generate_auth_url()
   }
 end
 
----Get access token (from cache, file, or refresh)
----@return string|nil, string|nil
 local function get_access_token()
-  if not _token_loaded then
-    load_tokens()
+  if not _loaded then
+    load_accounts()
   end
 
-  if
-    _access_token
-    and not oauth_utils.is_token_expired(_token_expires, OAUTH_CONFIG.ACCESS_TOKEN_EXPIRY_BUFFER_MS)
-  then
-    return _access_token, _project_id
+  local account = pick_next_account()
+  if not account then
+    log:error("Antigravity OAuth: No accounts available. Run :CCTools adapter antigravity auth")
+    return nil, nil
   end
 
-  if _refresh_token then
-    local new_token = refresh_access_token()
-    if new_token then
-      return new_token, _project_id
+  if account.access_token and not oauth_utils.is_token_expired(account.expires, OAUTH_CONFIG.ACCESS_TOKEN_EXPIRY_BUFFER_MS) then
+    return account.access_token, account.project_id
+  end
+
+  local new_token = refresh_account_token(account)
+  if new_token then
+    return new_token, account.project_id
+  end
+
+  mark_rate_limited(account, 60000)
+  log:warn("Antigravity OAuth: Account #%d token refresh failed, trying next", account.index)
+
+  local next_account = pick_next_account()
+  if next_account and next_account ~= account then
+    local token = refresh_account_token(next_account)
+    if token then
+      return token, next_account.project_id
     end
   end
 
-  log:error(
-    "Antigravity OAuth: Access token not available. Please run :AntigravityOAuthSetup to authenticate"
-  )
+  log:error("Antigravity OAuth: All accounts exhausted")
   return nil, nil
 end
 
@@ -584,59 +663,90 @@ local function generate_request_id()
   return "agent-" .. table.concat(parts, "-")
 end
 
----Generate a session ID
 local function generate_session_id()
-  return "-" .. tostring(math.random(1000000000000000000, 9999999999999999999))
+  local parts = {}
+  for _ = 1, 19 do
+    table.insert(parts, tostring(math.random(0, 9)))
+  end
+  return "-" .. table.concat(parts)
 end
 
----Setup OAuth authentication (exported for unified command)
 function M.setup_oauth()
   setup_oauth()
 end
 
----Show OAuth status (exported for unified command)
+function M.add_account()
+  setup_oauth()
+end
+
 function M.show_status()
-  load_tokens()
-  if not _refresh_token then
-    vim.notify(
-      "Antigravity OAuth: Not authenticated. Run :CCTools adapter antigravity auth",
-      vim.log.levels.WARN
-    )
+  load_accounts()
+  if #_accounts == 0 then
+    vim.notify("Antigravity OAuth: No accounts. Run :CCTools adapter antigravity auth", vim.log.levels.WARN)
     return
   end
 
-  local status = "Antigravity OAuth: Authenticated"
-  if _project_id then
-    status = status .. " (Project: " .. _project_id .. ")"
+  local lines = { string.format("Antigravity OAuth: %d account(s)", #_accounts) }
+  for i, acc in ipairs(_accounts) do
+    local status = acc.is_rate_limited and "rate-limited" or "active"
+    local token_status = ""
+    if acc.access_token and not oauth_utils.is_token_expired(acc.expires, OAUTH_CONFIG.ACCESS_TOKEN_EXPIRY_BUFFER_MS) then
+      token_status = " [valid]"
+    end
+    local email = acc.email or "unknown"
+    table.insert(lines, string.format("  #%d: %s (%s)%s", i, email, status, token_status))
   end
-  if
-    _access_token
-    and not oauth_utils.is_token_expired(_token_expires, OAUTH_CONFIG.ACCESS_TOKEN_EXPIRY_BUFFER_MS)
-  then
-    status = status .. " - Token is valid"
-  else
-    status = status .. " - Token needs refresh"
-  end
-  vim.notify(status, vim.log.levels.INFO)
+  vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO)
 end
 
----Clear OAuth tokens (exported for unified command)
+function M.list_accounts()
+  M.show_status()
+end
+
+function M.remove_account(index)
+  load_accounts()
+  if type(index) == "string" then
+    index = tonumber(index)
+  end
+
+  if not index then
+    vim.ui.input({ prompt = "Enter account number to remove: " }, function(input)
+      if input then
+        M.remove_account(tonumber(input))
+      end
+    end)
+    return
+  end
+
+  if index < 1 or index > #_accounts then
+    vim.notify(string.format("Antigravity OAuth: Invalid account number %d (have %d accounts)", index, #_accounts), vim.log.levels.ERROR)
+    return
+  end
+
+  local acc = _accounts[index]
+  local email = acc.email or "unknown"
+
+  if remove_account_by_index(index) then
+    vim.notify(string.format("Antigravity OAuth: Removed account #%d (%s). %d remaining.", index, email, #_accounts), vim.log.levels.INFO)
+  else
+    vim.notify("Antigravity OAuth: Failed to remove account", vim.log.levels.ERROR)
+  end
+end
+
 function M.clear_tokens()
-  local token_file = get_token_file_path()
-  if token_file and vim.fn.filereadable(token_file) == 1 then
-    local success = pcall(vim.fn.delete, token_file)
+  local file_path = get_accounts_file_path()
+  if file_path and vim.fn.filereadable(file_path) == 1 then
+    local success = pcall(vim.fn.delete, file_path)
     if success then
-      _access_token = nil
-      _refresh_token = nil
-      _token_expires = nil
-      _project_id = nil
-      _token_loaded = false
-      vim.notify("Antigravity OAuth: Tokens cleared.", vim.log.levels.INFO)
+      _accounts = {}
+      _cursor = 0
+      _loaded = false
+      vim.notify("Antigravity OAuth: All accounts cleared.", vim.log.levels.INFO)
     else
-      vim.notify("Antigravity OAuth: Failed to clear token file.", vim.log.levels.ERROR)
+      vim.notify("Antigravity OAuth: Failed to clear accounts file.", vim.log.levels.ERROR)
     end
   else
-    vim.notify("Antigravity OAuth: No tokens to clear.", vim.log.levels.WARN)
+    vim.notify("Antigravity OAuth: No accounts to clear.", vim.log.levels.WARN)
   end
 end
 
@@ -649,6 +759,7 @@ function M.create_adapter()
     roles = {
       llm = "model",
       user = "user",
+      tool = "tool",
     },
     opts = {
       stream = true,
@@ -678,14 +789,14 @@ function M.create_adapter()
         local access_token, project_id = get_access_token()
         if not access_token then
           vim.notify(
-            "Antigravity OAuth: Not authenticated. Run :AntigravityOAuthSetup to authenticate.",
+            "Antigravity OAuth: Not authenticated. Run :CCTools adapter antigravity auth",
             vim.log.levels.ERROR
           )
           return false
         end
         if not project_id then
           vim.notify(
-            "Antigravity OAuth: No project ID. Run :AntigravityOAuthSetup to reauthenticate.",
+            "Antigravity OAuth: No project ID. Run :CCTools adapter antigravity auth",
             vim.log.levels.ERROR
           )
           return false
@@ -732,10 +843,28 @@ function M.create_adapter()
         return {}
       end,
 
+      form_tools = function(self, tools)
+        return nil
+      end,
+
       set_body = function(self, payload)
         local contents = {}
         local system_instruction = nil
         local messages = payload.messages or {}
+
+        local function add_content(role, parts)
+          if #parts == 0 then
+            return
+          end
+          local last = contents[#contents]
+          if last and last.role == role then
+            for _, p in ipairs(parts) do
+              table.insert(last.parts, p)
+            end
+          else
+            table.insert(contents, { role = role, parts = parts })
+          end
+        end
 
         for _, msg in ipairs(messages) do
           if msg.role == "system" then
@@ -743,9 +872,39 @@ function M.create_adapter()
               system_instruction = { parts = {} }
             end
             table.insert(system_instruction.parts, { text = msg.content })
+          elseif msg.role == "tool" then
+            local parts = {}
+            if msg.content and type(msg.content) == "table" then
+              for _, part in ipairs(msg.content) do
+                if part.functionResponse then
+                  table.insert(parts, part)
+                end
+              end
+            end
+            add_content("user", parts)
           elseif msg.role == "user" or msg.role == "assistant" then
             local role = msg.role == "assistant" and "model" or "user"
             local parts = {}
+
+            if msg.tools and msg.tools.calls then
+              for _, tool_call in ipairs(msg.tools.calls) do
+                local args = {}
+                if tool_call["function"] and tool_call["function"].arguments then
+                  local decode_ok, decoded = pcall(vim.json.decode, tool_call["function"].arguments)
+                  if decode_ok then
+                    args = decoded
+                  end
+                end
+                local fc = {
+                  name = tool_call["function"].name,
+                  args = args,
+                }
+                if tool_call.thoughtSignature then
+                  fc.thoughtSignature = tool_call.thoughtSignature
+                end
+                table.insert(parts, { functionCall = fc })
+              end
+            end
 
             if msg._meta and msg._meta.tag == "image" and msg.context and msg.context.mimetype then
               table.insert(parts, {
@@ -754,7 +913,7 @@ function M.create_adapter()
                   data = msg.content,
                 },
               })
-            elseif type(msg.content) == "string" then
+            elseif type(msg.content) == "string" and msg.content ~= "" then
               table.insert(parts, { text = msg.content })
             elseif type(msg.content) == "table" then
               for _, part in ipairs(msg.content) do
@@ -777,9 +936,7 @@ function M.create_adapter()
               end
             end
 
-            if #parts > 0 then
-              table.insert(contents, { role = role, parts = parts })
-            end
+            add_content(role, parts)
           end
         end
 
@@ -789,6 +946,42 @@ function M.create_adapter()
 
         if system_instruction then
           request.systemInstruction = system_instruction
+        end
+
+        if self.opts.tools and payload.tools and vim.tbl_count(payload.tools) > 0 then
+          local declarations = {}
+          for _, tool in pairs(payload.tools) do
+            for _, schema in pairs(tool) do
+              if schema.type == "function" and schema["function"] then
+                local params = schema["function"].parameters
+                if params then
+                  params = vim.deepcopy(params)
+                  if params.properties then
+                    for prop_name, prop in pairs(params.properties) do
+                      if prop.enum and #prop.enum > 0 then
+                        local string_enum = {}
+                        for _, v in ipairs(prop.enum) do
+                          table.insert(string_enum, tostring(v))
+                        end
+                        params.properties[prop_name].enum = string_enum
+                        if prop.type == "integer" or prop.type == "number" then
+                          params.properties[prop_name].type = "string"
+                        end
+                      end
+                    end
+                  end
+                end
+                table.insert(declarations, {
+                  name = schema["function"].name,
+                  description = schema["function"].description,
+                  parameters = params,
+                })
+              end
+            end
+          end
+          if #declarations > 0 then
+            request.tools = { { functionDeclarations = declarations } }
+          end
         end
 
         local model = self.schema.model.default
@@ -808,7 +1001,7 @@ function M.create_adapter()
         request.sessionId = generate_session_id()
 
         return {
-          project = self._project_id or _project_id,
+          project = self._project_id,
           model = model,
           request = request,
           userAgent = "antigravity",
@@ -853,8 +1046,30 @@ function M.create_adapter()
         local role = candidate.content.role == "model" and "assistant" or candidate.content.role
 
         if candidate.content.parts then
-          for _, part in ipairs(candidate.content.parts) do
-            if part.text then
+          for i, part in ipairs(candidate.content.parts) do
+            if part.functionCall and tools then
+              local args = part.functionCall.args or {}
+              local args_json = ""
+              local encode_ok, encoded = pcall(vim.json.encode, args)
+              if encode_ok then
+                args_json = encoded
+              end
+
+              local call_id = string.format("call_%s_%d", generate_request_id():sub(7), i)
+              local tool_data = {
+                _index = i,
+                id = call_id,
+                type = "function",
+                ["function"] = {
+                  name = part.functionCall.name,
+                  arguments = args_json,
+                },
+              }
+              if part.thoughtSignature then
+                tool_data.thoughtSignature = part.thoughtSignature
+              end
+              table.insert(tools, tool_data)
+            elseif part.text then
               if part.thought then
                 thinking = thinking .. part.text
               else
@@ -864,7 +1079,7 @@ function M.create_adapter()
           end
         end
 
-        if content == "" and thinking == "" and not role then
+        if content == "" and thinking == "" and not role and (not tools or #tools == 0) then
           return nil
         end
 
@@ -873,15 +1088,48 @@ function M.create_adapter()
           content = content,
         }
 
+        local extra = nil
         if thinking ~= "" then
-          output.reasoning = { content = thinking }
+          extra = { thinking_content = thinking }
         end
 
         return {
           status = "success",
           output = output,
+          extra = extra,
         }
       end,
+
+      parse_message_meta = function(self, data)
+        local extra = data.extra
+        if extra and extra.thinking_content then
+          data.output.reasoning = { content = extra.thinking_content }
+          if data.output.content == "" then
+            data.output.content = nil
+          end
+        end
+        return data
+      end,
+
+      tools = {
+        format_tool_calls = function(self, tool_calls)
+          return tool_calls
+        end,
+
+        output_response = function(self, tool_call, output)
+          return {
+            role = "tool",
+            content = {
+              {
+                functionResponse = {
+                  name = tool_call["function"]["name"],
+                  response = { result = output },
+                },
+              },
+            },
+          }
+        end,
+      },
 
       inline_output = function(self, data, context)
         local result = self.handlers.chat_output(self, data, nil)
