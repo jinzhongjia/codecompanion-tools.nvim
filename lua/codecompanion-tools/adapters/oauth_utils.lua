@@ -3,7 +3,6 @@
 local M = {}
 
 local uv = vim.uv or vim.loop
-local _seeded = false
 
 ---Trim whitespace from string
 ---@param str string|nil
@@ -63,19 +62,13 @@ function M.parse_query_string(query)
   return params
 end
 
+---Generate cryptographically secure random bytes using vim.uv.random()
 ---@param length number
 ---@return string
 function M.secure_random_bytes(length)
-  if not _seeded then
-    local seed = os.time() * 1000 + (uv and uv.hrtime() % 1000000 or 0) + (vim.fn.getpid() or 0)
-    math.randomseed(seed)
-    _seeded = true
-  end
-  local bytes = {}
-  for i = 1, length do
-    bytes[i] = string.char(math.random(0, 255))
-  end
-  return table.concat(bytes)
+  -- Use vim.uv.random for cryptographically secure random bytes
+  -- This is crucial for generating secure PKCE verifiers and OAuth states
+  return uv.random(length)
 end
 
 ---Convert hex string to binary

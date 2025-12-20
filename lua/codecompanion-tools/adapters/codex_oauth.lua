@@ -594,6 +594,33 @@ function M.clear_tokens()
   end
 end
 
+local INSTRUCTIONS_CACHE_FILE = "codex_instructions_cache.json"
+
+local function get_instructions_cache_path()
+  return oauth_utils.get_token_file_path(INSTRUCTIONS_CACHE_FILE)
+end
+
+local function load_cached_instructions()
+  local cache_path = get_instructions_cache_path()
+  if not cache_path then
+    return nil
+  end
+  local data = oauth_utils.load_json_file(cache_path)
+  if data and data.instructions and data.instructions ~= "" then
+    return data.instructions
+  end
+  return nil
+end
+
+local function get_instructions()
+  local cached = load_cached_instructions()
+  if cached then
+    return cached
+  end
+  local codex_instructions = require("codecompanion-tools.adapters.codex_instructions")
+  return codex_instructions.INSTRUCTIONS
+end
+
 function M.update_instructions()
   local codex_instructions = require("codecompanion-tools.adapters.codex_instructions")
 
@@ -611,39 +638,23 @@ function M.update_instructions()
     return
   end
 
-  local info = debug.getinfo(1, "S")
-  local current_file = info.source:sub(2)
-  local dir = vim.fn.fnamemodify(current_file, ":h")
-  local instructions_file = dir .. "/codex_instructions.lua"
+  local cache_path = get_instructions_cache_path()
+  if not cache_path then
+    vim.notify("Codex: Unable to determine cache path", vim.log.levels.ERROR)
+    return
+  end
 
-  local date = os.date("%Y-%m-%d")
-  local new_content = string.format(
-    [[-- Codex Instructions (fetched from https://github.com/openai/codex)
--- Last updated: %s
--- Run :CCTools adapter codex instructions to update from GitHub
+  local cache_data = {
+    instructions = response.body,
+    source_url = codex_instructions.SOURCE_URL,
+    updated_at = os.date("%Y-%m-%d %H:%M:%S"),
+    version = 1,
+  }
 
-local M = {}
-
-M.INSTRUCTIONS = %s
-
-M.SOURCE_URL = %q
-
-return M
-]],
-    date,
-    vim.inspect(response.body),
-    codex_instructions.SOURCE_URL
-  )
-
-  local success, err = pcall(function()
-    vim.fn.writefile(vim.split(new_content, "\n", { plain = true }), instructions_file)
-  end)
-
-  if success then
-    package.loaded["codecompanion-tools.adapters.codex_instructions"] = nil
-    vim.notify("Codex: Instructions updated successfully! Restart Neovim to apply.", vim.log.levels.INFO)
+  if oauth_utils.save_json_file(cache_path, cache_data) then
+    vim.notify("Codex: Instructions updated successfully!", vim.log.levels.INFO)
   else
-    vim.notify("Codex: Failed to write instructions file: " .. (err or "unknown"), vim.log.levels.ERROR)
+    vim.notify("Codex: Failed to save instructions cache", vim.log.levels.ERROR)
   end
 end
 
@@ -654,8 +665,6 @@ end
 ---Create the adapter
 ---@return table
 function M.create_adapter()
-  local codex_instructions = require("codecompanion-tools.adapters.codex_instructions")
-
   return {
     name = "codex_oauth",
     formatted_name = "Codex (ChatGPT OAuth)",
@@ -804,8 +813,8 @@ function M.create_adapter()
           params.text = params.text or {}
           params.text.verbosity = params.text.verbosity or "medium"
 
-          -- Set instructions
-          params.instructions = codex_instructions.INSTRUCTIONS
+          -- Set instructions (from cache or bundled default)
+          params.instructions = get_instructions()
 
           -- Clean up nested parameters that were flattened
           params["reasoning.effort"] = nil
