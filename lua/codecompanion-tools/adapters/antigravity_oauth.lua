@@ -849,26 +849,37 @@ function M.create_adapter()
         end
 
         local content = ""
+        local thinking = ""
         local role = candidate.content.role == "model" and "assistant" or candidate.content.role
 
         if candidate.content.parts then
           for _, part in ipairs(candidate.content.parts) do
             if part.text then
-              content = content .. part.text
+              if part.thought then
+                thinking = thinking .. part.text
+              else
+                content = content .. part.text
+              end
             end
           end
         end
 
-        if content == "" and not role then
+        if content == "" and thinking == "" and not role then
           return nil
+        end
+
+        local output = {
+          role = role,
+          content = content,
+        }
+
+        if thinking ~= "" then
+          output.reasoning = { content = thinking }
         end
 
         return {
           status = "success",
-          output = {
-            role = role,
-            content = content,
-          },
+          output = output,
         }
       end,
 
