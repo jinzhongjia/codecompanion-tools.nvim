@@ -535,7 +535,7 @@ local function encode_state(verifier)
 end
 
 ---Generate OAuth authorization URL
----@return { url: string, verifier: string }|nil
+---@return { url: string, verifier: string, state: string }|nil
 local function generate_auth_url()
   local pkce = oauth_utils.generate_pkce(64)
   if not pkce then
@@ -562,6 +562,7 @@ local function generate_auth_url()
   return {
     url = auth_url,
     verifier = pkce.verifier,
+    state = state,
   }
 end
 
@@ -619,9 +620,14 @@ local function setup_oauth()
     "/oauth-callback",
     nil,
     SUCCESS_HTML,
-    function(code, err)
+    function(code, err, state)
       if err then
         vim.notify("Antigravity OAuth failed: " .. err, vim.log.levels.ERROR)
+        return
+      end
+
+      if not state or state ~= auth_data.state then
+        vim.notify("Antigravity OAuth failed: State mismatch (CSRF detected)", vim.log.levels.ERROR)
         return
       end
 

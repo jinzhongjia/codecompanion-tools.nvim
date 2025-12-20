@@ -73,20 +73,20 @@ vim.keymap.set("n", "<leader>tc", ":CCTranslatorLog clear<CR>", { desc = "Clear 
 --   },
 -- })
 --
--- Available OAuth Commands:
---   :AnthropicOAuthSetup   - Setup Anthropic OAuth authentication
---   :AnthropicOAuthStatus  - Check Anthropic OAuth status
---   :AnthropicOAuthClear   - Clear Anthropic OAuth credentials
+-- Available OAuth Commands via :CCTools
+--   :CCTools adapter anthropic auth    - Setup Anthropic OAuth authentication
+--   :CCTools adapter anthropic status  - Check Anthropic OAuth status
+--   :CCTools adapter anthropic clear   - Clear Anthropic OAuth credentials
 --
---   :CodexOAuthSetup       - Setup Codex (ChatGPT) OAuth authentication
---   :CodexOAuthStatus      - Check Codex OAuth status
---   :CodexOAuthClear       - Clear Codex OAuth credentials
---   :CodexUpdateInstructions - Update Codex system instructions from GitHub
+--   :CCTools adapter codex auth        - Setup Codex (ChatGPT) OAuth authentication
+--   :CCTools adapter codex status      - Check Codex OAuth status
+--   :CCTools adapter codex clear       - Clear Codex OAuth credentials
+--   :CCTools adapter codex instructions - Update Codex system instructions from GitHub
 --
---   :GeminiOAuthSetup      - Setup Gemini OAuth authentication
---   :GeminiOAuthStatus     - Check Gemini OAuth status
---   :GeminiOAuthClear      - Clear Gemini OAuth credentials
+--   :CCTools adapter gemini auth       - Setup Gemini OAuth authentication
+--   :CCTools adapter gemini status     - Check Gemini OAuth status
+--   :CCTools adapter gemini clear      - Clear Gemini OAuth credentials
 --
---   :AntigravityOAuthSetup - Setup Antigravity OAuth authentication
---   :AntigravityOAuthStatus - Check Antigravity OAuth status
---   :AntigravityOAuthClear  - Clear Antigravity OAuth credentials
+--   :CCTools adapter antigravity auth  - Setup Antigravity OAuth authentication
+--   :CCTools adapter antigravity status - Check Antigravity OAuth status
+--   :CCTools adapter antigravity clear - Clear Antigravity OAuth credentials
