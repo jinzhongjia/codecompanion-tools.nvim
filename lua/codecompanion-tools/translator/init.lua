@@ -65,6 +65,49 @@ function M.create_commands()
       return out
     end,
   })
+
+  utils.create_command("CCTranslatorCacheClear", function()
+    core.clear_cache()
+    utils.notify("Translation cache cleared", vim.log.levels.INFO, "Translator")
+  end, {
+    desc = "Clear translator cache",
+  })
+end
+
+function M.health()
+  local health = vim.health
+  local cfg = config.opts
+
+  health.start("Translator Module")
+
+  health.ok("Default target language: " .. cfg.default_target_lang)
+
+  if cfg.adapter then
+    health.ok("Custom adapter: " .. cfg.adapter)
+  else
+    health.info("Using CodeCompanion default adapter")
+  end
+
+  if cfg.cache.enabled then
+    health.ok(string.format("Cache enabled (TTL: %ds)", cfg.cache.ttl))
+  else
+    health.info("Cache disabled")
+  end
+
+  if cfg.debug.enabled then
+    health.ok("Debug logging: " .. cfg.debug.log_level)
+  else
+    health.info("Debug logging disabled")
+  end
+
+  local logger = require("codecompanion-tools.translator.logger").get()
+  local log_path = logger and logger.path or "unknown"
+  local log_dir = vim.fn.fnamemodify(log_path, ":h")
+  if vim.fn.isdirectory(log_dir) == 1 then
+    health.ok("Log directory exists: " .. log_dir)
+  else
+    health.warn("Log directory does not exist: " .. log_dir)
+  end
 end
 
 return M

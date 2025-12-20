@@ -1,7 +1,48 @@
 local M = {}
 local utils = require("codecompanion-tools.common.utils")
 
--- Lazy load configuration and logger
+---@type table<string, {result: string, timestamp: number}>
+local cache = {}
+
+local function get_cache_key(text, target_lang)
+  return target_lang .. ":" .. text
+end
+
+local function get_cached(text, target_lang)
+  local cfg = require("codecompanion-tools.translator.config").opts
+  if not cfg.cache.enabled then
+    return nil
+  end
+
+  local key = get_cache_key(text, target_lang)
+  local entry = cache[key]
+  if not entry then
+    return nil
+  end
+
+  local now = os.time()
+  if now - entry.timestamp > cfg.cache.ttl then
+    cache[key] = nil
+    return nil
+  end
+
+  return entry.result
+end
+
+local function set_cached(text, target_lang, result)
+  local cfg = require("codecompanion-tools.translator.config").opts
+  if not cfg.cache.enabled then
+    return
+  end
+
+  local key = get_cache_key(text, target_lang)
+  cache[key] = { result = result, timestamp = os.time() }
+end
+
+function M.clear_cache()
+  cache = {}
+end
+
 local function get_config()
   return require("codecompanion-tools.translator.config").opts
 end
@@ -78,22 +119,46 @@ local function send_request(messages, adapter_name, model_name, cb)
   }, { silent = true })
 end
 
-local function output_result(translated)
+local function output_result(translated, bufnr, start_line, end_line)
   local cfg = get_config()
-  -- Only print translation result
-  print(translated)
+
+  if cfg.output.replace_selection and bufnr and start_line and end_line then
+    if not vim.api.nvim_buf_is_valid(bufnr) then
+      utils.notify("Buffer no longer valid, printing result instead", vim.log.levels.WARN, "Translator")
+      print(translated)
+    else
+      local line_count = vim.api.nvim_buf_line_count(bufnr)
+      if end_line > line_count then
+        utils.notify("Lines changed, printing result instead", vim.log.levels.WARN, "Translator")
+        print(translated)
+      else
+        local lines = vim.split(translated, "\n", { plain = true })
+        vim.api.nvim_buf_set_lines(bufnr, start_line - 1, end_line, false, lines)
+        utils.notify("Text replaced", vim.log.levels.INFO, "Translator")
+      end
+    end
+  else
+    print(translated)
+  end
+
   if cfg.output.copy_to_clipboard then
     vim.fn.setreg("+", translated)
     utils.notify("Copied to clipboard", vim.log.levels.INFO, "Translator")
   end
 end
 
+---@class TranslateVisualOpts
+---@field target_lang? string
+---@field adapter? string
+---@field model? string
+
+---@param opts? TranslateVisualOpts
 function M.translate_visual(opts)
   opts = opts or {}
   local cfg = get_config()
   local logger = get_logger()
 
-  -- Strictly get visual selection; use original function if no selection (maintain backward compatibility)
+  local bufnr = vim.api.nvim_get_current_buf()
   local text, start_line, end_line = utils.get_strict_visual_selection()
   if text then
     logger:debug("Got selection text: lines %d-%d", start_line, end_line)
@@ -102,7 +167,18 @@ function M.translate_visual(opts)
     logger:debug("No strict selection, falling back to general: lines %d-%d", start_line, end_line)
   end
 
+  if not text or vim.trim(text) == "" then
+    return utils.notify("No text selected for translation", vim.log.levels.WARN, "Translator")
+  end
+
   local target = opts.target_lang or cfg.default_target_lang
+
+  local cached_result = get_cached(text, target)
+  if cached_result then
+    logger:debug("Cache hit for target: %s", target)
+    return output_result(cached_result, bufnr, start_line, end_line)
+  end
+
   local messages = build_messages(text, target)
   local adapter = opts.adapter or cfg.adapter
   local model = opts.model or cfg.model
@@ -111,7 +187,8 @@ function M.translate_visual(opts)
     if err then
       return utils.notify("Translation failed: " .. err, vim.log.levels.ERROR, "Translator")
     end
-    output_result(translated)
+    set_cached(text, target, translated)
+    output_result(translated, bufnr, start_line, end_line)
   end)
 end
 
