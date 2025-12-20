@@ -1055,20 +1055,36 @@ function M.create_adapter()
                 args_json = encoded
               end
 
-              local call_id = string.format("call_%s_%d", generate_request_id():sub(7), i)
-              local tool_data = {
-                _index = i,
-                id = call_id,
-                type = "function",
-                ["function"] = {
-                  name = part.functionCall.name,
-                  arguments = args_json,
-                },
-              }
-              if part.thoughtSignature then
-                tool_data.thoughtSignature = part.thoughtSignature
+              local found = false
+              for _, existing_tool in ipairs(tools) do
+                if existing_tool._index == i then
+                  if args_json ~= "" then
+                    existing_tool["function"]["arguments"] = (existing_tool["function"]["arguments"] or "") .. args_json
+                  end
+                  if part.thoughtSignature then
+                    existing_tool.thoughtSignature = part.thoughtSignature
+                  end
+                  found = true
+                  break
+                end
               end
-              table.insert(tools, tool_data)
+
+              if not found then
+                local call_id = string.format("call_%s_%d", generate_request_id():sub(7), i)
+                local tool_data = {
+                  _index = i,
+                  id = call_id,
+                  type = "function",
+                  ["function"] = {
+                    name = part.functionCall.name,
+                    arguments = args_json,
+                  },
+                }
+                if part.thoughtSignature then
+                  tool_data.thoughtSignature = part.thoughtSignature
+                end
+                table.insert(tools, tool_data)
+              end
             elseif part.text then
               if part.thought then
                 thinking = thinking .. part.text
