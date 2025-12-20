@@ -39,7 +39,7 @@ Pre-configured OAuth adapters for popular AI providers, enabling seamless authen
 
 ```lua
 {
-  "codecompanion-tools.nvim",
+  "jinzhongjia/codecompanion-tools.nvim",
   dependencies = {
     "olimorris/codecompanion.nvim",
   },
@@ -128,8 +128,8 @@ Tokens are stored securely at `~/.local/share/nvim/` and are automatically refre
 require("codecompanion-tools").setup({
   translator = {
     -- Use specific adapter (optional, defaults to CodeCompanion's default)
-    adapter = nil,          -- alias: default_adapter
-    model = nil,            -- default model (alias: default_model)
+    adapter = nil,
+    model = nil,
 
     -- Default target language for translations
     default_target_lang = "en",
@@ -140,26 +140,18 @@ require("codecompanion-tools").setup({
       log_level = "INFO", -- DEBUG|INFO|WARN|ERROR
     },
 
-    -- Fallback options for older CodeCompanion versions
-    fallback = {
-      use_chat = false, -- Open chat window instead of direct output
-    },
-
     -- Output settings
     output = {
-      show_original = true,           -- Show original text in output
       notification_timeout = 4000,    -- Notification display time (ms)
       copy_to_clipboard = false,      -- Auto-copy translation to clipboard
     },
 
     -- Custom prompt template (%s will be replaced with target language)
-    prompt = [[You are a professional software localization translator.
-Translate the following content into %s.
-Keep code blocks unchanged.
-Return only the translated text.
-Do not add any explanation.
-Do not output any emojis or decorative symbols that are not present in the source.
-Preserve the original meaning and technical terms.]],
+    prompt = {
+      system = [[You are a professional translator. Translate the following content into %s.
+Keep code blocks, technical terms, and formatting unchanged.
+Return only the translated text without any explanation.]],
+    },
 
     -- Language mappings (code -> full name)
     languages = {
@@ -203,7 +195,6 @@ require("codecompanion-tools").setup({
       log_level = "DEBUG"  -- Verbose logging for debugging
     },
     output = {
-      show_original = true,
       notification_timeout = 5000,
       copy_to_clipboard = true  -- Auto-copy translations
     },

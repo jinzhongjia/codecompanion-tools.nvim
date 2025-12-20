@@ -39,7 +39,7 @@
 
 ```lua
 {
-  "codecompanion-tools.nvim",
+  "jinzhongjia/codecompanion-tools.nvim",
   dependencies = {
     "olimorris/codecompanion.nvim",
   },
@@ -128,8 +128,8 @@ require("codecompanion").setup({
 require("codecompanion-tools").setup({
   translator = {
     -- 使用特定适配器（可选，默认使用 CodeCompanion 的默认适配器）
-    adapter = nil,       -- 兼容字段: default_adapter
-    model = nil,         -- 默认模型（兼容字段: default_model）
+    adapter = nil,
+    model = nil,
 
     -- 翻译的默认目标语言
     default_target_lang = "en",
@@ -140,26 +140,18 @@ require("codecompanion-tools").setup({
       log_level = "INFO", -- DEBUG|INFO|WARN|ERROR
     },
 
-    -- 旧版 CodeCompanion 的回退选项
-    fallback = {
-      use_chat = false, -- 打开聊天窗口而不是直接输出
-    },
-
     -- 输出设置
     output = {
-      show_original = true,           -- 在输出中显示原文
       notification_timeout = 4000,    -- 通知显示时间（毫秒）
       copy_to_clipboard = false,      -- 自动复制翻译到剪贴板
     },
 
     -- 自定义提示词模板（%s 将被替换为目标语言）
-    prompt = [[You are a professional software localization translator.
-Translate the following content into %s.
-Keep code blocks unchanged.
-Return only the translated text.
-Do not add any explanation.
-Do not output any emojis or decorative symbols that are not present in the source.
-Preserve the original meaning and technical terms.]],
+    prompt = {
+      system = [[You are a professional translator. Translate the following content into %s.
+Keep code blocks, technical terms, and formatting unchanged.
+Return only the translated text without any explanation.]],
+    },
 
     -- 语言映射（代码 -> 完整名称）
     languages = {
@@ -203,7 +195,6 @@ require("codecompanion-tools").setup({
       log_level = "DEBUG"  -- 详细日志用于调试
     },
     output = {
-      show_original = true,
       notification_timeout = 5000,
       copy_to_clipboard = true  -- 自动复制翻译
     },
