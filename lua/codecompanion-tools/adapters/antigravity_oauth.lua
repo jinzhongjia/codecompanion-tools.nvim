@@ -1174,7 +1174,7 @@ function M.create_adapter()
         mapping = "parameters",
         type = "enum",
         desc = "The model that will complete your prompt.",
-        default = "gemini-2.5-flash",
+        default = "gemini-3-flash",
         choices = {
           ["gemini-3-pro-high"] = {
             formatted_name = "Gemini 3 Pro High",

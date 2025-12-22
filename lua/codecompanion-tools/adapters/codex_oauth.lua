@@ -1204,7 +1204,7 @@ function M.create_adapter()
         mapping = "parameters",
         type = "enum",
         desc = "The model that will complete your prompt.",
-        default = "gpt-5.1-codex",
+        default = "gpt-5.2-codex",
         choices = {
           ["gpt-5.2"] = {
             formatted_name = "GPT-5.2",
